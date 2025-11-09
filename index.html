@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CareerMove - Job Decision Analyzer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 600px;
+      width: 100%;
+      padding: 40px;
+    }
+    h1 {
+      font-size: 32px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    .section {
+      margin-bottom: 30px;
+    }
+    .section h2 {
+      font-size: 18px;
+      color: #333;
+      margin-bottom: 15px;
+      font-weight: 600;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #555;
+      margin-bottom: 5px;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    input[type="range"] {
+      flex: 1;
+      cursor: pointer;
+    }
+    .slider-value {
+      min-width: 30px;
+      text-align: center;
+      font-weight: 600;
+      color: #667eea;
+    }
+    .button-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 30px;
+    }
+    button {
+      flex: 1;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.2);
+    }
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    .result {
+      display: none;
+      text-align: center;
+    }
+    .result.show {
+      display: block;
+    }
+    .recommendation {
+      font-size: 48px;
+      font-weight: 700;
+      margin: 20px 0;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    .recommendation.take {
+      background: #d4edda;
+      color: #155724;
+    }
+    .recommendation.pass {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .recommendation.negotiate {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .score {
+      font-size: 24px;
+      font-weight: 600;
+      color: #333;
+      margin: 15px 0;
+    }
+    .explanation {
+      font-size: 16px;
+      color: #666;
+      margin: 15px 0;
+      font-style: italic;
+    }
+    .breakdown {
+      text-align: left;
+      margin: 30px 0;
+    }
+    .breakdown-item {
+      background: #f8f9fa;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-left: 3px solid #667eea;
+      border-radius: 4px;
+    }
+    .breakdown-key {
+      font-weight: 600;
+      color: #333;
+    }
+    .breakdown-value {
+      color: #666;
+      margin-top: 4px;
+      font-size: 14px;
+    }
+    .history {
+      display: none;
+    }
+    .history.show {
+      display: block;
+    }
+    .history-item {
+      background: #f8f9fa;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-left: 3px solid #2196F3;
+      border-radius: 4px;
+    }
+    .history-rec {
+      font-weight: 600;
+      font-size: 16px;
+      color: #333;
+    }
+    .history-date {
+      font-size: 12px;
+      color: #999;
+      margin-top: 5px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="profileScreen">
+      <h1>CareerMove</h1>
+      <p class="subtitle">Your personal job decision coach</p>
+      
+      <div class="section">
+        <h2>Your Profile</h2>
+        
+        <div class="form-group">
+          <label>Current Salary ($)</label>
+          <input type="number" id="currentSalary" value="80000" placeholder="e.g., 80000">
+        </div>
+
+        <div class="form-group">
+          <label>Salary Priority</label>
+          <div class="slider-container">
+            <input type="range" id="prioritySalary" min="1" max="5" value="3">
+            <span class="slider-value" id="salaryValue">3</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Work-Life Balance Priority</label>
+          <div class="slider-container">
+            <input type="range" id="priorityBalance" min="1" max="5" value="4">
+            <span class="slider-value" id="balanceValue">4</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Career Growth Priority</label>
+          <div class="slider-container">
+            <input type="range" id="priorityGrowth" min="1" max="5" value="3">
+            <span class="slider-value" id="growthValue">3</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Stability Priority</label>
+          <div class="slider-container">
+            <input type="range" id="priorityStability" min="1" max="5" value="4">
+            <span class="slider-value" id="stabilityValue">4</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Remote Work Priority</label>
+          <div class="slider-container">
+            <input type="range" id="priorityRemote" min="1" max="5" value="3">
+            <span class="slider-value" id="remoteValue">3</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button class="btn-primary" onclick="goToJobScreen()">Evaluate Offer</button>
+        <button class="btn-secondary" onclick="showHistory()">History</button>
+      </div>
+    </div>
+
+    <div id="jobScreen" class="hidden">
+      <h1>Job Offer</h1>
+      
+      <div class="section">
+        <div class="form-group">
+          <label>Job Title</label>
+          <input type="text" id="jobTitle" placeholder="e.g., Senior Engineer">
+        </div>
+
+        <div class="form-group">
+          <label>Company Name</label>
+          <input type="text" id="company" placeholder="e.g., Google">
+        </div>
+
+        <div class="form-group">
+          <label>Base Salary ($)</label>
+          <input type="number" id="baseSalary" placeholder="e.g., 95000">
+        </div>
+
+        <div class="form-group">
+          <label>Hours Per Week</label>
+          <input type="number" id="hoursPerWeek" value="45">
+        </div>
+
+        <div class="form-group">
+          <label>Company Stage</label>
+          <select id="fundingStage">
+            <option value="seed">Seed Startup</option>
+            <option value="series-a">Series A</option>
+            <option value="growth" selected>Growth Stage</option>
+            <option value="public">Public Company</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Team Size</label>
+          <input type="number" id="teamSize" value="5">
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="isRemote"> Fully Remote?
+          </label>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button class="btn-primary" onclick="analyzeOffer()">Analyze</button>
+        <button class="btn-secondary" onclick="goToProfileScreen()">Back</button>
+      </div>
+    </div>
+
+    <div id="resultScreen" class="hidden">
+      <h1>Recommendation</h1>
+      
+      <div id="resultContent"></div>
+
+      <div class="button-row">
+        <button class="btn-primary" onclick="goToJobScreen()">Try Another</button>
+        <button class="btn-secondary" onclick="goToProfileScreen()">Back to Profile</button>
+      </div>
+    </div>
+
+    <div id="historyScreen" class="hidden">
+      <h1>Decision History</h1>
+      <div id="historyContent"></div>
+      <button class="btn-secondary" onclick="goToProfileScreen()" style="width: 100%; margin-top: 20px;">Back</button>
+    </div>
+  </div>
+
+  <script>
+    let decisions = JSON.parse(localStorage.getItem('careermoveDecisions')) || [];
+
+    // Slider listeners
+    document.getElementById('prioritySalary').addEventListener('input', (e) => {
+      document.getElementById('salaryValue').textContent = e.target.value;
+    });
+    document.getElementById('priorityBalance').addEventListener('input', (e) => {
+      document.getElementById('balanceValue').textContent = e.target.value;
+    });
+    document.getElementById('priorityGrowth').addEventListener('input', (e) => {
+      document.getElementById('growthValue').textContent = e.target.value;
+    });
+    document.getElementById('priorityStability').addEventListener('input', (e) => {
+      document.getElementById('stabilityValue').textContent = e.target.value;
+    });
+    document.getElementById('priorityRemote').addEventListener('input', (e) => {
+      document.getElementById('remoteValue').textContent = e.target.value;
+    });
+
+    function showScreen(screenId) {
+      document.getElementById('profileScreen').classList.add('hidden');
+      document.getElementById('jobScreen').classList.add('hidden');
+      document.getElementById('resultScreen').classList.add('hidden');
+      document.getElementById('historyScreen').classList.add('hidden');
+      document.getElementById(screenId).classList.remove('hidden');
+    }
+
+    function goToProfileScreen() {
+      showScreen('profileScreen');
+    }
+
+    function goToJobScreen() {
+      showScreen('jobScreen');
+      document.getElementById('jobTitle').value = '';
+      document.getElementById('company').value = '';
+      document.getElementById('baseSalary').value = '';
+    }
+
+    function analyzeOffer() {
+      const currentSalary = parseInt(document.getElementById('currentSalary').value);
+      const baseSalary = parseInt(document.getElementById('baseSalary').value);
+      const jobTitle = document.getElementById('jobTitle').value;
+      const company = document.getElementById('company').value;
+
+      if (!baseSalary || !jobTitle || !company) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      const profile = {
+        currentSalary,
+        priority_salary: parseInt(document.getElementById('prioritySalary').value),
+        priority_balance: parseInt(document.getElementById('priorityBalance').value),
+        priority_growth: parseInt(document.getElementById('priorityGrowth').value),
+        priority_stability: parseInt(document.getElementById('priorityStability').value),
+        priority_remote: parseInt(document.getElementById('priorityRemote').value),
+      };
+
+      const job = {
+        baseSalary,
+        hoursPerWeek: parseInt(document.getElementById('hoursPerWeek').value),
+        fundingStage: document.getElementById('fundingStage').value,
+        teamSize: parseInt(document.getElementById('teamSize').value),
+        isRemote: document.getElementById('isRemote').checked,
+      };
+
+      const analysis = calculateDecisionScore(profile, job);
+      
+      // Save to decisions
+      decisions.push({
+        ...analysis,
+        job,
+        timestamp: new Date().toLocaleString()
+      });
+      localStorage.setItem('careermoveDecisions', JSON.stringify(decisions));
+
+      // Display result
+      displayResult(analysis);
+      showScreen('resultScreen');
+    }
+
+    function calculateDecisionScore(profile, job) {
+      let score = 0;
+      let breakdown = {};
+
+      // SALARY
+      const salaryChange = job.baseSalary - profile.currentSalary;
+      const salaryPercent = (salaryChange / profile.currentSalary) * 100;
+      
+      if (salaryPercent >= 15) {
+        score += profile.priority_salary * 0.5;
+        breakdown.salary = `+${salaryPercent.toFixed(1)}% raise (Your priority: ${profile.priority_salary}/5)`;
+      } else if (salaryPercent >= 5) {
+        score += profile.priority_salary * 0.2;
+        breakdown.salary = `+${salaryPercent.toFixed(1)}% raise (Your priority: ${profile.priority_salary}/5)`;
+      } else if (salaryPercent < 0) {
+        score -= profile.priority_salary * 0.3;
+        breakdown.salary = `${salaryPercent.toFixed(1)}% cut (Your priority: ${profile.priority_salary}/5)`;
+      }
+
+      // BALANCE
+      const hours = job.hoursPerWeek;
+      if (hours > 50) {
+        score -= profile.priority_balance * 0.4;
+        breakdown.balance = `${hours} hrs/week - TOO MUCH (Your priority: ${profile.priority_balance}/5)`;
+      } else if (hours > 45) {
+        score -= profile.priority_balance * 0.1;
+        breakdown.balance = `${hours} hrs/week - slightly high (Your priority: ${profile.priority_balance}/5)`;
+      } else {
+        score += profile.priority_balance * 0.3;
+        breakdown.balance = `${hours} hrs/week - good (Your priority: ${profile.priority_balance}/5)`;
+      }
+
+      // STABILITY
+      const stage = job.fundingStage;
+      if (stage === 'seed') {
+        score -= profile.priority_stability * 0.5;
+        breakdown.stability = `Seed startup - HIGH RISK (Your priority: ${profile.priority_stability}/5)`;
+      } else if (stage === 'series-a') {
+        score -= profile.priority_stability * 0.2;
+        breakdown.stability = `Series A - moderate risk (Your priority: ${profile.priority_stability}/5)`;
+      } else if (stage === 'growth') {
+        score += profile.priority_stability * 0.1;
+        breakdown.stability = `Growth stage - stable (Your priority: ${profile.priority_stability}/5)`;
+      } else if (stage === 'public') {
+        score += profile.priority_stability * 0.5;
+        breakdown.stability = `Public company - very safe (Your priority: ${profile.priority_stability}/5)`;
+      }
+
+      // GROWTH
+      const teamSize = job.teamSize;
+      if (teamSize > 10) {
+        score += profile.priority_growth * 0.4;
+        breakdown.growth = `Large team (${teamSize}) - great mentorship (Your priority: ${profile.priority_growth}/5)`;
+      } else if (teamSize > 5) {
+        score += profile.priority_growth * 0.2;
+        breakdown.growth = `Medium team (${teamSize}) - good growth (Your priority: ${profile.priority_growth}/5)`;
+      } else if (teamSize <= 3) {
+        score -= profile.priority_growth * 0.3;
+        breakdown.growth = `Small team (${teamSize}) - limited growth (Your priority: ${profile.priority_growth}/5)`;
+      }
+
+      // REMOTE
+      if (profile.priority_remote >= 4) {
+        if (job.isRemote) {
+          score += 3;
+          breakdown.remote = `Fully remote - MATCHES YOUR PRIORITY ✅ (Your priority: ${profile.priority_remote}/5)`;
+        } else {
+          score -= 2;
+          breakdown.remote = `On-site - CONFLICTS (Your priority: ${profile.priority_remote}/5)`;
+        }
+      }
+
+      // RECOMMENDATION
+      let recommendation = 'UNDECIDED';
+      let explanation = '';
+      
+      if (score >= 7) {
+        recommendation = 'TAKE ✅';
+        explanation = 'Strong yes. This aligns well with your priorities.';
+      } else if (score >= 4) {
+        recommendation = 'TAKE ✅';
+        explanation = 'Yes. Good overall fit for you.';
+      } else if (score >= 0) {
+        recommendation = 'NEGOTIATE 🤝';
+        explanation = 'Close call. Try negotiating on weak points.';
+      } else if (score >= -3) {
+        recommendation = 'PROBABLY PASS ⚠️';
+        explanation = 'Lean towards no. Better options likely exist.';
+      } else {
+        recommendation = 'PASS ❌';
+        explanation = 'Strong no. This does not fit your priorities.';
+      }
+
+      return { score: score.toFixed(1), recommendation, breakdown, explanation };
+    }
+
+    function displayResult(analysis) {
+      const recClass = analysis.recommendation.includes('TAKE') ? 'take' : 
+                       analysis.recommendation.includes('PASS') ? 'pass' : 'negotiate';
+      
+      let html = `
+        <div class="recommendation ${recClass}">${analysis.recommendation}</div>
+        <div class="score">Score: ${analysis.score}/10</div>
+        <div class="explanation">${analysis.explanation}</div>
+        <div class="section">
+          <h2>Analysis Breakdown</h2>
+          <div class="breakdown">
+      `;
+      
+      for (let [key, value] of Object.entries(analysis.breakdown)) {
+        html += `
+          <div class="breakdown-item">
+            <div class="breakdown-key">${key}</div>
+            <div class="breakdown-value">${value}</div>
+          </div>
+        `;
+      }
+      
+      html += `</div></div>`;
+      document.getElementById('resultContent').innerHTML = html;
+    }
+
+    function showHistory() {
+      if (decisions.length === 0) {
+        document.getElementById('historyContent').innerHTML = '<p>No decisions yet.</p>';
+      } else {
+        let html = '';
+        decisions.forEach((d, i) => {
+          html += `
+            <div class="history-item">
+              <div class="history-rec">${d.recommendation}</div>
+              <div>Score: ${d.score}/10</div>
+              <div class="history-date">${d.timestamp}</div>
+            </div>
+          `;
+        });
+        document.getElementById('historyContent').innerHTML = html;
+      }
+      showScreen('historyScreen');
+    }
+  </script>
+</body>
+</html>
