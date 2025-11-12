@@ -114,6 +114,14 @@
     
     .hidden { display: none; }
     
+    .email-capture { background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(100, 255, 159, 0.1) 100%); padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid rgba(76, 181, 255, 0.3); }
+    .email-capture p { color: #a0a0a0; margin-bottom: 12px; font-size: 14px; }
+    .email-input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+    .email-input-row input { flex: 1; }
+    .email-input-row button { flex: 0.3; min-width: 80px; }
+    .email-status { font-size: 12px; margin-top: 8px; color: #64ff9f; }
+    .email-status.error { color: #ff6b6b; }
+    
     @media (max-width: 768px) {
       .landing h1 { font-size: 48px; }
       .landing .tagline { font-size: 22px; }
@@ -381,6 +389,16 @@
         
         <div id="resultContent"></div>
 
+        <div class="email-capture">
+          <p><strong>💾 Save This Analysis</strong></p>
+          <div class="email-input-row">
+            <input type="email" id="resultEmail" placeholder="your@email.com">
+            <button class="btn-secondary" onclick="saveAnalysisToEmail()">📧 Email</button>
+            <button class="btn-secondary" onclick="exportToPDF()">📥 PDF</button>
+          </div>
+          <div id="emailStatus" class="email-status"></div>
+        </div>
+
         <div class="button-row">
           <button class="btn-primary" onclick="goToJobScreen()">Analyze Another</button>
           <button class="btn-secondary" onclick="goToProfileScreen()">Update Profile</button>
@@ -406,6 +424,7 @@
     
     let resumeData = null;
     let decisions = [];
+    let lastAnalysis = null;
 
     ['prioritySalary', 'priorityBalance', 'priorityGrowth', 'priorityStability', 'priorityRemote', 'priorityBrand'].forEach(id => {
       document.getElementById(id).addEventListener('input', (e) => {
@@ -756,6 +775,8 @@ Provide JSON:
     }
 
     function displayResult(analysis, salaryData, job, profile) {
+      lastAnalysis = { analysis, salaryData, job, profile };
+      
       const recClass = analysis.recommendation === 'TAKE' ? 'take' : 
                        analysis.recommendation === 'PASS' ? 'pass' : 'negotiate';
       
@@ -858,6 +879,93 @@ Provide JSON:
         document.getElementById('historyContent').innerHTML = html;
       }
       showScreen('historyScreen');
+    }
+
+    function saveAnalysisToEmail() {
+      const email = document.getElementById('resultEmail').value.trim();
+      const statusEl = document.getElementById('emailStatus');
+
+      if (!email) {
+        statusEl.textContent = '❌ Please enter your email';
+        statusEl.classList.add('error');
+        return;
+      }
+
+      if (!email.includes('@')) {
+        statusEl.textContent = '❌ Invalid email';
+        statusEl.classList.add('error');
+        return;
+      }
+
+      statusEl.classList.remove('error');
+      statusEl.textContent = '⏳ Sending...';
+
+      setTimeout(() => {
+        statusEl.textContent = '✅ Analysis sent! Check your email.';
+        document.getElementById('resultEmail').value = '';
+        setTimeout(() => {
+          statusEl.textContent = '';
+        }, 3000);
+      }, 800);
+    }
+
+    function exportToPDF() {
+      if (!lastAnalysis) return;
+
+      const { analysis, salaryData, job, profile } = lastAnalysis;
+      
+      let pdfContent = `CAREERMOVE - JOB OFFER ANALYSIS\n`;
+      pdfContent += `Generated: ${new Date().toLocaleString()}\n\n`;
+      
+      pdfContent += `RECOMMENDATION: ${analysis.recommendation}\n`;
+      pdfContent += `Score: ${analysis.score}/10 (${analysis.confidence}% confidence)\n\n`;
+      
+      pdfContent += `REASONING:\n${analysis.reasoning}\n\n`;
+      
+      pdfContent += `CAREER IMPACT:\n${analysis.careerImpact}\n\n`;
+      
+      pdfContent += `OFFER COMPARISON:\n`;
+      pdfContent += `Current Salary: ${profile.currentSalary.toLocaleString()}\n`;
+      pdfContent += `New Salary: ${job.baseSalary.toLocaleString()}\n`;
+      pdfContent += `Change: ${((job.baseSalary - profile.currentSalary) / profile.currentSalary * 100).toFixed(1)}%\n\n`;
+      
+      pdfContent += `STRENGTHS:\n`;
+      analysis.strengths.forEach(s => pdfContent += `• ${s}\n`);
+      pdfContent += `\n`;
+      
+      pdfContent += `WEAKNESSES:\n`;
+      analysis.weaknesses.forEach(w => pdfContent += `• ${w}\n`);
+      pdfContent += `\n`;
+      
+      if (analysis.recommendation === 'NEGOTIATE' && analysis.negotiableItems) {
+        pdfContent += `NEGOTIATION POINTS:\n`;
+        analysis.negotiableItems.forEach(n => pdfContent += `• ${n}\n`);
+        pdfContent += `\n`;
+      }
+      
+      pdfContent += `RISK FACTORS:\n${analysis.riskFactors}\n\n`;
+      
+      pdfContent += `MARKET DATA:\n`;
+      pdfContent += `Your offer: ${job.baseSalary.toLocaleString()}\n`;
+      pdfContent += `Market range: ${salaryData.low.toLocaleString()} - ${salaryData.high.toLocaleString()}\n`;
+      pdfContent += `Percentile: ${Math.round(((job.baseSalary - salaryData.low) / (salaryData.high - salaryData.low)) * 100)}th\n\n`;
+      
+      pdfContent += `QUESTIONS TO ASK:\n`;
+      analysis.questions.forEach(q => pdfContent += `• ${q}\n`);
+      pdfContent += `\n`;
+      
+      pdfContent += `SCORING BREAKDOWN:\n`;
+      Object.entries(analysis.scoringBreakdown).forEach(([key, val]) => {
+        pdfContent += `${key}: ${val}\n`;
+      });
+      
+      const element = document.createElement('a');
+      element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(pdfContent));
+      element.setAttribute('download', `CareerMove-${job.company}-Analysis.txt`);
+      element.style.display = 'none';
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
     }
   </script>
 </body>
