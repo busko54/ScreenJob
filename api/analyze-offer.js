@@ -78,8 +78,8 @@ Provide ONLY valid JSON (no markdown, no extra text):
 
     const data = await response.json();
     const textContent = data.candidates[0].content.parts[0].text;
-    const analysis = JSON.parse(textContent);
-
+    const cleanJson = textContent.replace(/```json\n?|\n?```/g, '').trim();
+    const analysis = JSON.parse(cleanJson);
     return res.status(200).json(analysis);
   } catch (error) {
     console.error('Analysis error:', error);
