@@ -1260,6 +1260,27 @@
     }
 
     document.getElementById('feedbackTab').addEventListener('click', showFeedbackModal);
+    let stripe = null;
+let elements = null;
+let cardElement = null;
+
+function initStripe() {
+  if (stripe) return;
+  stripe = Stripe('pk_test_YOUR_STRIPE_PUBLISHABLE_KEY_HERE');
+  elements = stripe.elements();
+  cardElement = elements.create('card');
+}
+
+function showPaymentModal() {
+  document.getElementById('paymentOverlay').classList.add('show');
+  document.getElementById('paymentModal').classList.add('show');
+  initStripe();
+}
+
+function closePaymentModal() {
+  document.getElementById('paymentOverlay').classList.remove('show');
+  document.getElementById('paymentModal').classList.remove('show');
+}
   </script>
 </body>
 </html>
