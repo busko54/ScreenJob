@@ -1389,6 +1389,10 @@ document.getElementById('paymentForm').addEventListener('submit', async (e) => {
 
 function completePayment() {
   closePaymentModal();
+  if (lastAnalysis) {
+    const { analysis, salaryData, job, profile } = lastAnalysis;
+    displayResult(analysis, salaryData, job, profile);
+  }
   showScreen('resultScreen');
 }
 function closePaymentModal() {
