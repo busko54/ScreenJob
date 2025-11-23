@@ -855,14 +855,14 @@
       }
     }
 
-    async function analyzeOffer() {
+   async function analyzeOffer() {
   const currentSalary = parseInt(document.getElementById('currentSalary').value);
-  const baseSalary = parseInt(document.getElementById('baseSalary').value);
+  const baseSalary = parseInt(document.getElementById('baseSalary').value) || 0;
   const jobTitle = document.getElementById('jobTitle').value;
   const company = document.getElementById('company').value;
 
-  if (!baseSalary || !jobTitle || !company) {
-    alert('Please fill in job title, company, and salary');
+  if (!jobTitle || !company) {
+    alert('Please fill in job title and company');
     return;
   }
 
