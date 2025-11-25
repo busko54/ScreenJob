@@ -856,13 +856,22 @@
     }
 
    async function analyzeOffer() {
-  const currentSalary = parseInt(document.getElementById('currentSalary').value);
-  const baseSalary = parseInt(document.getElementById('baseSalary').value) || 0;
-  const jobTitle = document.getElementById('jobTitle').value;
-  const company = document.getElementById('company').value;
+  const jobTitle = document.getElementById('jobTitle').value.trim();
+  const company = document.getElementById('company').value.trim();
 
   if (!jobTitle || !company) {
     alert('Please fill in job title and company');
+    return;
+  }
+
+  // Reject obviously fake data
+  if (jobTitle.length < 3 || company.length < 3) {
+    alert('Please enter a real job title and company name');
+    return;
+  }
+
+  if (/^[a-z0-9]+$/.test(jobTitle) || /^[a-z0-9]+$/.test(company)) {
+    alert('That looks like test data. Please enter a real job title and company');
     return;
   }
 
