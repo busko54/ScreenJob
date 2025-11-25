@@ -1687,6 +1687,46 @@ function closePaymentModal() {
   document.getElementById('paymentOverlay').classList.remove('show');
   document.getElementById('paymentModal').classList.remove('show');
 }
+   // Save app state on page load
+window.addEventListener('load', () => {
+  const savedScreen = localStorage.getItem('offerfit_currentScreen');
+  if (savedScreen === 'app') {
+    document.getElementById('landingPage').style.display = 'none';
+    document.getElementById('appContainer').classList.add('show');
+    
+    // Restore which screen they were on
+    const savedScreenName = localStorage.getItem('offerfit_activeScreen');
+    if (savedScreenName) {
+      showScreen(savedScreenName);
+    } else {
+      showScreen('profileScreen');
+    }
+  }
+});
+
+// Save state whenever screens change
+function showScreen(screenId) {
+  document.querySelectorAll('[id$="Screen"]').forEach(el => el.classList.add('hidden'));
+  document.getElementById(screenId).classList.remove('hidden');
+  localStorage.setItem('offerfit_activeScreen', screenId);
+  hideFeedbackTab();
+}
+
+// Update startApp to save state
+function startApp() {
+  gtag('event', 'start_app_clicked');
+  localStorage.setItem('offerfit_currentScreen', 'app');
+  document.getElementById('landingPage').style.display = 'none';
+  document.getElementById('appContainer').classList.add('show');
+  showScreen('profileScreen');
+}
+
+// Update goToLanding to clear state
+function goToLanding() {
+  localStorage.setItem('offerfit_currentScreen', 'landing');
+  document.getElementById('appContainer').classList.remove('show');
+  document.getElementById('landingPage').style.display = 'flex';
+}
   </script>
 </body>
 </html>
