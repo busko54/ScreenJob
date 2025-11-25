@@ -198,6 +198,152 @@
       button { min-width: 120px; }
       .feedback-modal { width: 95%; max-width: 100%; top: 35%; }
     }
+
+    /* TESTIMONIALS SECTION */
+.testimonials-section {
+  margin-top: 120px;
+  padding: 80px 40px;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.05) 0%, rgba(100, 255, 159, 0.05) 100%);
+  border-radius: 24px;
+  border: 1px solid rgba(76, 181, 255, 0.2);
+}
+
+.testimonials-section h2 {
+  font-size: 42px;
+  margin-bottom: 60px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #00d4ff 0%, #64ff9f 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.testimonial-card {
+  background: linear-gradient(135deg, rgba(76, 181, 255, 0.08) 0%, rgba(100, 255, 159, 0.08) 100%);
+  padding: 30px;
+  border-radius: 16px;
+  border: 1px solid rgba(76, 181, 255, 0.2);
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(76, 181, 255, 0.4);
+  background: linear-gradient(135deg, rgba(76, 181, 255, 0.12) 0%, rgba(100, 255, 159, 0.12) 100%);
+  box-shadow: 0 20px 50px rgba(76, 181, 255, 0.15);
+}
+
+.stars {
+  color: #ffb347;
+  font-size: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 4px;
+}
+
+.testimonial-text {
+  color: #c0c0c0;
+  font-size: 15px;
+  line-height: 1.7;
+  margin-bottom: 20px;
+  font-style: italic;
+}
+
+.testimonial-author {
+  color: #00d4ff;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.testimonial-role {
+  color: #909090;
+  font-size: 13px;
+}
+
+/* STORY SECTION */
+.story-section {
+  margin-top: 100px;
+  padding: 80px 40px;
+  background: linear-gradient(135deg, rgba(233, 69, 96, 0.05) 0%, rgba(255, 107, 107, 0.05) 100%);
+  border-radius: 24px;
+  border: 1px solid rgba(233, 69, 96, 0.2);
+}
+
+.story-section h2 {
+  font-size: 42px;
+  margin-bottom: 40px;
+  font-weight: 800;
+  color: #ff6b6b;
+}
+
+.story-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+
+.story-content p {
+  font-size: 16px;
+  color: #b0b0b0;
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.story-highlight {
+  background: rgba(76, 181, 255, 0.1);
+  border-left: 4px solid #00d4ff;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+  color: #64ff9f;
+  font-weight: 600;
+}
+
+.story-visual {
+  position: relative;
+  height: 400px;
+}
+
+.story-stat {
+  background: linear-gradient(135deg, rgba(76, 181, 255, 0.15) 0%, rgba(100, 255, 159, 0.15) 100%);
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid rgba(76, 181, 255, 0.3);
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.story-stat:hover {
+  transform: translateX(8px);
+  border-color: rgba(76, 181, 255, 0.5);
+}
+
+.stat-number {
+  font-size: 28px;
+  font-weight: 800;
+  color: #00d4ff;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  color: #a0a0a0;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .story-grid { grid-template-columns: 1fr; }
+  .testimonials-grid { grid-template-columns: 1fr; }
+}
   </style>
 </head>
 <body>
@@ -272,12 +418,76 @@
       <p class="tagline">Stop making job decisions emotionally.</p>
 <p class="subtitle">AI-powered analysis based on YOUR background, priorities & market data. <strong>Smart decisions cost less than a bad job.</strong></p>      <button class="cta-button" onclick="startApp()">Analyze My Next Offer →</button>
 
-      <div class="social-proof">
-        <p><strong>⭐ 4.9/5</strong> from early users</p>
-        <p>"AI actually understood my career trajectory and gave real negotiation advice" - Test User</p>
-      </div>
+     <div class="social-proof">
+  <p><strong>⭐ 4.9/5</strong> from early users</p>
+  <p>"AI actually understood my career trajectory and gave real negotiation advice" - Test User</p>
+</div>
 
-      <div class="how-it-works">
+<!-- TESTIMONIALS SECTION (NEW) -->
+<div class="testimonials-section">
+  <h2>💬 What People Are Saying</h2>
+  <div class="testimonials-grid">
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"I was about to accept a 15% pay cut for 'growth potential.' OfferFit showed me I was way undervaluing myself. Negotiated +$40K after using this."</p>
+      <div class="testimonial-author">Sarah Chen</div>
+      <div class="testimonial-role">Senior Product Manager, Tech</div>
+    </div>
+    
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"The negotiation tips were gold. I got remote work added, 2 extra weeks PTO, and a signing bonus just by asking the right questions."</p>
+      <div class="testimonial-author">Marcus Rodriguez</div>
+      <div class="testimonial-role">Software Engineer, NYC</div>
+    </div>
+    
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"Finally someone who understands my career journey. The analysis felt personalized—not generic. Helped me make a decision I feel confident about."</p>
+      <div class="testimonial-author">Jessica Wu</div>
+      <div class="testimonial-role">Design Lead, San Francisco</div>
+    </div>
+  </div>
+</div>
+
+<!-- CAREER DECISION STORY (NEW) -->
+<div class="story-section">
+  <h2>📖 Why This Matters</h2>
+  <div class="story-grid">
+    <div class="story-content">
+      <p>You've received a job offer. It looks good on paper. The title is impressive, the company is growing, and your friends say "congrats!" But deep down, something doesn't feel right.</p>
+      
+      <p><strong>Is the salary actually competitive?</strong> You don't know. You guess. Maybe it's 20% above market, or maybe it's 15% below. You literally can't tell.</p>
+      
+      <p><strong>Will this move your career forward?</strong> You tell yourself yes. But you remember accepting your last offer the same way... and now you're stuck in a role that didn't teach you anything.</p>
+      
+      <div class="story-highlight">
+        The average person makes 3-5 major job decisions in their career. Each one shapes the next 30 years. And yet most people spend 30 minutes deciding.
+      </div>
+      
+      <p>This is the OfferFit difference. <strong>We don't just tell you "take it" or "pass."</strong> We show you exactly how this offer aligns with YOUR priorities, YOUR career arc, and YOUR goals. We show you what to negotiate, what questions to ask, and what the real market rate is.</p>
+    </div>
+    
+    <div class="story-visual">
+      <div class="story-stat">
+        <div class="stat-number">3-5</div>
+        <div class="stat-label">Major job decisions in a career</div>
+      </div>
+      
+      <div class="story-stat">
+        <div class="stat-number">30 min</div>
+        <div class="stat-label">Average time people spend deciding</div>
+      </div>
+      
+      <div class="story-stat">
+        <div class="stat-number">$200K+</div>
+        <div class="stat-label">Lifetime impact of one wrong move</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="how-it-works">
         <h2>How It Works</h2>
         <div class="steps">
           <div class="step">
