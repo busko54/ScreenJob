@@ -18,12 +18,12 @@ module.exports = async function handler(req, res) {
         currency: 'usd',
         payment_method: paymentMethodId,
         confirm: true,
-        return_url: 'https://www.offerfit.app',
+        return_url: 'https://www.ScreenJob.app',
         automatic_payment_methods: {
           enabled: true,
           allow_redirects: 'never'
         },
-        description: 'OfferFit - Single Analysis'
+        description: 'ScreenJob - Single Analysis'
       });
 
       return res.status(200).json({
@@ -32,7 +32,7 @@ module.exports = async function handler(req, res) {
       });
     } else if (planType === 'monthly') {
       const customer = await stripe.customers.create({
-        email: email || 'customer@offerfit.app',
+        email: email || 'customer@ScreenJob.app',
         payment_method: paymentMethodId,
         invoice_settings: {
           default_payment_method: paymentMethodId
@@ -44,7 +44,7 @@ module.exports = async function handler(req, res) {
         items: [{
           price_data: {
             currency: 'usd',
-            product_data: { name: 'OfferFit Monthly - Unlimited Analyses' },
+            product_data: { name: 'ScreenJob Monthly - Unlimited Analyses' },
             recurring: { interval: 'month' },
             unit_amount: amount
           }
