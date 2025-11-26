@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OfferFit - Job Decision Analyzer</title>
+  <title>ScreenJob - Job Decision Analyzer</title>
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
 
   <!-- Google tag (gtag.js) -->
@@ -418,7 +418,7 @@
 <!-- LANDING PAGE -->
   <div id="landingPage" class="landing">
     <div class="landing-content">
-      <h1>OfferFit</h1>
+      <h1>ScreenJob</h1>
       <p class="tagline">Find the right job before you apply.</p>
       <p class="subtitle">AI-powered screening based on YOUR background and priorities. <strong>Skip the wrong jobs. Apply to the right ones.</strong></p>
       <button class="cta-button" onclick="startApp()">Screen Job Postings →</button>
@@ -447,7 +447,7 @@
     
     <div class="testimonial-card">
       <div class="stars">★★★★★</div>
-      <p class="testimonial-text">"Finally, I'm not applying to jobs that sound good but don't fit my priorities. Applied to 3 jobs OfferFit recommended, got 2 interviews."</p>
+      <p class="testimonial-text">"Finally, I'm not applying to jobs that sound good but don't fit my priorities. Applied to 3 jobs ScreenJob recommended, got 2 interviews."</p>
       <div class="testimonial-author">Emma Williams</div>
       <div class="testimonial-role">Product Manager, SF</div>
     </div>
@@ -476,7 +476,7 @@
         The average person spends 30+ hours applying to jobs that don't fit them. Most never get past the first interview. What if you could know BEFORE you apply?
       </div>
       
-      <p>This is the OfferFit difference. <strong>We analyze each job posting against YOUR background, priorities, and goals.</strong> We tell you which jobs are actually worth your time. Which ones align with your career arc. Which ones pay fairly. Which ones have red flags.</p>
+      <p>This is the ScreenJob difference. <strong>We analyze each job posting against YOUR background, priorities, and goals.</strong> We tell you which jobs are actually worth your time. Which ones align with your career arc. Which ones pay fairly. Which ones have red flags.</p>
     </div>
     
    <div class="story-visual">
@@ -540,9 +540,9 @@
           <span style="color: #707080;">|</span>
           <a href="terms.html" style="color: #00d4ff; text-decoration: none; margin: 0 15px; transition: 0.3s;" onmouseover="this.style.color='#64ff9f'" onmouseout="this.style.color='#00d4ff'">Terms of Service</a>
           <span style="color: #707080;">|</span>
-          <a href="mailto:support@OfferFit.app" style="color: #00d4ff; text-decoration: none; margin: 0 15px; transition: 0.3s;" onmouseover="this.style.color='#64ff9f'" onmouseout="this.style.color='#00d4ff'">Contact</a>
+          <a href="mailto:support@ScreenJob.app" style="color: #00d4ff; text-decoration: none; margin: 0 15px; transition: 0.3s;" onmouseover="this.style.color='#64ff9f'" onmouseout="this.style.color='#00d4ff'">Contact</a>
         </p>
-        <p style="color: #606070; font-size: 13px;">&copy; 2024 OfferFit. All rights reserved.</p>
+        <p style="color: #606070; font-size: 13px;">&copy; 2024 ScreenJob. All rights reserved.</p>
       </footer>
     </div>
   </div>
@@ -851,7 +851,7 @@
     let lastAnalysis = null;
 
     // Initialize analysis count from localStorage
-    let analysisCount = parseInt(localStorage.getItem('offerfit_analysisCount') || '0');
+    let analysisCount = parseInt(localStorage.getItem('ScreenJob_analysisCount') || '0');
 
     ['prioritySalary', 'priorityBalance', 'priorityGrowth', 'priorityStability', 'priorityRemote', 'priorityBrand'].forEach(id => {
       document.getElementById(id).addEventListener('input', (e) => {
@@ -1108,7 +1108,7 @@ if (
 
   // First analysis is FREE - continue
   analysisCount++;
-  localStorage.setItem('offerfit_analysisCount', analysisCount);  // Save to localStorage
+  localStorage.setItem('ScreenJob_analysisCount', analysisCount);  // Save to localStorage
 
   gtag('event', 'analyze_offer_clicked', {
     'job_title': jobTitle,
@@ -1360,9 +1360,9 @@ if (
       console.log('Feedback submitted:', feedback);
       
       try {
-        let feedbackList = JSON.parse(localStorage.getItem('OfferFit_feedback') || '[]');
+        let feedbackList = JSON.parse(localStorage.getItem('ScreenJob_feedback') || '[]');
         feedbackList.push(feedback);
-        localStorage.setItem('OfferFit_feedback', JSON.stringify(feedbackList));
+        localStorage.setItem('ScreenJob_feedback', JSON.stringify(feedbackList));
       } catch (e) {
         console.log('Feedback stored in memory');
       }
@@ -1412,7 +1412,7 @@ if (
       const htmlContent = `
         <html>
           <head>
-            <title>OfferFit - ${job.company} Analysis</title>
+            <title>ScreenJob - ${job.company} Analysis</title>
             <style>
               body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
               h1 { color: #00d4ff; margin-bottom: 10px; }
@@ -1432,7 +1432,7 @@ if (
             </style>
           </head>
           <body>
-            <h1>OfferFit - Job Offer Analysis</h1>
+            <h1>ScreenJob - Job Offer Analysis</h1>
             <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
             <p><strong>Company:</strong> ${job.company} | <strong>Position:</strong> ${job.jobTitle}</p>
             
@@ -1524,7 +1524,7 @@ if (
         
         const opt = {
           margin: 10,
-          filename: `OfferFit-${job.company}-Analysis.pdf`,
+          filename: `ScreenJob-${job.company}-Analysis.pdf`,
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: { scale: 2 },
           jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
@@ -1688,13 +1688,13 @@ function closePaymentModal() {
 }
    // Save app state on page load
 window.addEventListener('load', () => {
-  const savedScreen = localStorage.getItem('offerfit_currentScreen');
+  const savedScreen = localStorage.getItem('ScreenJob_currentScreen');
   if (savedScreen === 'app') {
     document.getElementById('landingPage').style.display = 'none';
     document.getElementById('appContainer').classList.add('show');
     
     // Restore which screen they were on
-    const savedScreenName = localStorage.getItem('offerfit_activeScreen');
+    const savedScreenName = localStorage.getItem('ScreenJob_activeScreen');
     if (savedScreenName) {
       showScreen(savedScreenName);
     } else {
@@ -1707,14 +1707,14 @@ window.addEventListener('load', () => {
 function showScreen(screenId) {
   document.querySelectorAll('[id$="Screen"]').forEach(el => el.classList.add('hidden'));
   document.getElementById(screenId).classList.remove('hidden');
-  localStorage.setItem('offerfit_activeScreen', screenId);
+  localStorage.setItem('ScreenJob_activeScreen', screenId);
   hideFeedbackTab();
 }
 
 // Update startApp to save state
 function startApp() {
   gtag('event', 'start_app_clicked');
-  localStorage.setItem('offerfit_currentScreen', 'app');
+  localStorage.setItem('ScreenJob_currentScreen', 'app');
   document.getElementById('landingPage').style.display = 'none';
   document.getElementById('appContainer').classList.add('show');
   showScreen('profileScreen');
@@ -1722,7 +1722,7 @@ function startApp() {
 
 // Update goToLanding to clear state
 function goToLanding() {
-  localStorage.setItem('offerfit_currentScreen', 'landing');
+  localStorage.setItem('ScreenJob_currentScreen', 'landing');
   document.getElementById('appContainer').classList.remove('show');
   document.getElementById('landingPage').style.display = 'flex';
 }
