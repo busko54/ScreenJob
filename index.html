@@ -1074,9 +1074,11 @@ function goToJobScreen() {
       }
     }
 
-   async function analyzeOffer() {
+   aasync function analyzeOffer() {
   const jobTitle = document.getElementById('jobTitle').value.trim();
   const company = document.getElementById('company').value.trim();
+  const currentSalary = parseInt(document.getElementById('currentSalary').value) || 0;
+  const baseSalary = parseInt(document.getElementById('baseSalary').value) || 0;
 
   if (!jobTitle || !company) {
     alert('Please fill in job title and company');
@@ -1089,26 +1091,25 @@ function goToJobScreen() {
     return;
   }
 
-  // Replace the overly strict regex check with this:
-if (
-  jobTitle.toLowerCase().includes('test') && jobTitle.length <= 10 ||
-  company.toLowerCase().includes('test') && company.length <= 10 ||
-  jobTitle.match(/^(asdf|qwer|123|xxx|yyyy|z+z)$/i) ||
-  company.match(/^(asdf|qwer|123|xxx|yyyy|z+z)$/i)
-) {
-  alert('That looks like test data. Please enter a real job title and company');
-  return;
-}
+  if (
+    jobTitle.toLowerCase().includes('test') && jobTitle.length <= 10 ||
+    company.toLowerCase().includes('test') && company.length <= 10 ||
+    jobTitle.match(/^(asdf|qwer|123|xxx|yyyy|z+z)$/i) ||
+    company.match(/^(asdf|qwer|123|xxx|yyyy|z+z)$/i)
+  ) {
+    alert('That looks like test data. Please enter a real job title and company');
+    return;
+  }
 
   // If this is the SECOND analysis or later, show payment modal
   if (analysisCount > 0) {
     showPaymentModal();
-    return;  // Stop here, user needs to pay
+    return;
   }
 
   // First analysis is FREE - continue
   analysisCount++;
-  localStorage.setItem('ScreenJob_analysisCount', analysisCount);  // Save to localStorage
+  localStorage.setItem('ScreenJob_analysisCount', analysisCount);
 
   gtag('event', 'analyze_offer_clicked', {
     'job_title': jobTitle,
@@ -1123,9 +1124,9 @@ if (
   const profile = {
     currentJobTitle: document.getElementById('currentJobTitle').value,
     currentCompany: document.getElementById('currentCompany').value,
-    currentSalary,
-    currentHours: parseInt(document.getElementById('currentHours').value),
-    yearsExp: parseInt(document.getElementById('yearsExp').value),
+    currentSalary: currentSalary,
+    currentHours: parseInt(document.getElementById('currentHours').value) || 0,
+    yearsExp: parseInt(document.getElementById('yearsExp').value) || 0,
     currentCompanySize: document.getElementById('currentCompanySize').value,
     priority_salary: parseInt(document.getElementById('prioritySalary').value),
     priority_balance: parseInt(document.getElementById('priorityBalance').value),
@@ -1137,15 +1138,15 @@ if (
   };
 
   const job = {
-    jobTitle,
-    company,
-    baseSalary,
+    jobTitle: jobTitle,
+    company: company,
+    baseSalary: baseSalary,
     equity: document.getElementById('equity').value,
     bonus: document.getElementById('bonus').value,
-    hoursPerWeek: parseInt(document.getElementById('hoursPerWeek').value),
+    hoursPerWeek: parseInt(document.getElementById('hoursPerWeek').value) || 0,
     workEnv: document.getElementById('workEnv').value,
     fundingStage: document.getElementById('fundingStage').value,
-    teamSize: parseInt(document.getElementById('teamSize').value),
+    teamSize: parseInt(document.getElementById('teamSize').value) || 0,
     industry: document.getElementById('industry').value,
     concerns: document.getElementById('concerns').value
   };
@@ -1169,6 +1170,11 @@ if (
   } catch (error) {
     console.error('Analysis error:', error);
     alert('Error during analysis. Please try again.');
+  } finally {
+    btn.textContent = 'Analyze This Offer';
+    btn.disabled = false;
+  }
+}
   } finally {
     btn.textContent = 'Analyze This Offer';
     btn.disabled = false;
