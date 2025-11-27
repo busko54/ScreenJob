@@ -844,6 +844,8 @@ input::placeholder, textarea::placeholder { color: #707070; }
   </div>
 
  <script>
+   localStorage.removeItem('ScreenJob_currentScreen');
+    localStorage.removeItem('ScreenJob_activeScreen');
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     
     let resumeData = null;
