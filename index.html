@@ -759,26 +759,27 @@ input::placeholder, textarea::placeholder { color: #707070; }
           <div class="form-group">
             <label>Company Stage</label>
             <select id="fundingStage">
-              <option value="seed">Seed Startup (Very High Risk)</option>
-              <option value="series-a">Series A (High Risk)</option>
-              <option value="series-b">Series B-C (Moderate Risk)</option>
-              <option value="growth" selected>Growth Stage (Stable)</option>
+  <option value="">Select funding stage</option>
+  <option value="seed">Seed Startup (Very High Risk)</option>
+  <option value="series-a">Series A (High Risk)</option>
+  <option value="series-b">Series B-C (Moderate Risk)</option>
+  <option value="growth">Growth Stage (Stable)</option>
               <option value="public">Public Company (Very Safe)</option>
             </select>
           </div>
 
           <div class="form-group">
             <label>Team Size</label>
-            <input type="number" id="teamSize" value="5" min="1">
-          </div>
+<input type="number" id="teamSize" placeholder="e.g., 5" min="1">          </div>
 
           <div class="form-group">
             <label>Work Environment</label>
             <select id="workEnv">
-              <option value="full-remote">Fully Remote</option>
-              <option value="hybrid">Hybrid</option>
-              <option value="onsite" selected>On-site</option>
-            </select>
+  <option value="">Select work environment</option>
+  <option value="full-remote">Fully Remote</option>
+  <option value="hybrid">Hybrid</option>
+  <option value="onsite">On-site</option>
+</select>
           </div>
 
           <div class="form-group">
