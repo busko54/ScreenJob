@@ -1039,8 +1039,7 @@ function goToJobScreen() {
   if (!resumeData) return;
 
   const btn = document.getElementById('extractResumeBtn');
-  btn.textContent = '⏳ Extracting...';
-  btn.disabled = true;
+btn.innerHTML = '<span class="spinner-big"></span> Extracting...';  btn.disabled = true;
 
   try {
     const response = await fetch("/api/extract-resume", {
@@ -1062,8 +1061,8 @@ function goToJobScreen() {
       document.getElementById('yearsExp').value = extracted.yearsOfExperience;
     }
 
-        btn.textContent = '✅ Extracted!';
-        setTimeout(() => {
+btn.innerHTML = '✅ Extracted!';
+    setTimeout(() => {
           btn.textContent = '🤖 Extract from Resume';
           btn.disabled = false;
         }, 2000);
@@ -1085,8 +1084,7 @@ function goToJobScreen() {
       }
 
       const button = event.target;
-      button.textContent = '⏳ Extracting...';
-      button.disabled = true;
+button.innerHTML = '<span class="spinner-big"></span> Extracting...';      button.disabled = true;
 
       try {
         const response = await fetch("/api/extract-job", {
