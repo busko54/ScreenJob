@@ -1191,28 +1191,23 @@ btn.innerHTML = '<span class="spinner-big"></span> Extracting...';  btn.disabled
     }
 
     // Show skill levels section if resume has skills/certs
-if ((extracted.certifications && extracted.certifications.length > 0) || 
-    (extracted.skills && extracted.skills.length > 0)) {
-  
-  document.getElementById('technicalProficiencySection').style.display = 'block';
-  
-  let skillHTML = '';
-  const allSkills = [];
-  
-  // Add certifications
-  if (extracted.certifications && extracted.certifications.length > 0) {
-    extracted.certifications.forEach(cert => {
-      allSkills.push(cert);
-    });
-  }
-  
-  // Add skills
-  if (extracted.skills && extracted.skills.length > 0) {
-    extracted.skills.forEach(skill => {
-      allSkills.push(skill);
-    });
-  }
-  
+// Store extracted data
+window.extractedData = {
+  skills: extracted.skills || [],
+  certifications: extracted.certifications || [],
+  other: []
+};
+
+// Display sections only if they have data
+if (window.extractedData.skills && window.extractedData.skills.length > 0) {
+  displayExtractedSection('skills', window.extractedData.skills, 'extractedSkillsSection');
+}
+if (window.extractedData.certifications && window.extractedData.certifications.length > 0) {
+  displayExtractedSection('certifications', window.extractedData.certifications, 'extractedCertsSection');
+}
+if (window.extractedData.other && window.extractedData.other.length > 0) {
+  displayExtractedSection('other', window.extractedData.other, 'extractedOtherSection');
+}
   // Build HTML for all skills
  // Build HTML for all skills
 
