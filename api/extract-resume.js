@@ -41,12 +41,23 @@ export default async function handler(req, res) {
   "currentCompany": "string",
   "yearsOfExperience": number,
   "education": "highest degree and school",
-  "certifications": ["cert1", "cert2", "cert3"],
-  "skills": ["skill1", "skill2", "skill3", "skill4"],
-  "achievements": ["award1", "award2", "achievement1"],
+  "certifications": ["cert1", "cert2"],
+  "skills": ["skill1", "skill2"],
+  "achievements": ["List ALL notable achievements, awards, honors, memberships, recognitions found in the resume. Include: dean's list, honors, GPA highlights, professional affiliations/memberships, awards, speaking engagements, publications, projects, competitions won, anything notable. Be comprehensive."],
   "companies": [{"name": "string", "years": number}],
-  "careerSummary": "2-3 sentence summary of career progression and specialization"
+  "careerSummary": "2-3 sentence summary"
 }
+
+IMPORTANT: For achievements, extract EVERYTHING that shows accomplishments:
+- Professional memberships (OWASP, IEEE, etc)
+- Academic honors (Dean's List, Magna Cum Laude, etc)
+- Awards won
+- Publications
+- Speaking engagements
+- Notable projects or labs completed
+- Competition wins
+- Any recognition or achievement listed
+
 Resume:
 ${resumeText}`;
     const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", {
