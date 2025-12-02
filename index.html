@@ -378,32 +378,25 @@ input::placeholder, textarea::placeholder { color: #707070; }
 .tags-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;                  /* space between tags */
-  justify-content: flex-start;
-  padding: 8px 0;
+  gap: 10px;
+  padding: 10px 0;
 }
 
-.tag {
-  display: inline-flex;
+tag {
+  display: inline-flex;              /* ← this is the magic */
   align-items: center;
-  background: linear-gradient(135deg, rgba(76, 181, 255, 0.15), rgba(100, 255, 159, 0.15));
-  border: 1px solid rgba(76, 181, 255, 0.3);
- max-width: 160px !important;
-  padding: 7px 12px;          /* comfortable but not huge */
-  border-radius: 30px;        /* perfect pill shape */
-  font-size: 12px;
+  height: 32px;
+  padding: 0 14px;                   /* only left/right padding you control */
+  background: linear-gradient(135deg, #1e2a38, #162231);
+  border: 1px solid #00d4ff;
+  border-radius: 20px;
+  font-size: 13px;
   font-weight: 600;
-  color: #c0e0ff;
-  line-height: 1;
-  white-space: nowrap;
-
-  /* THIS IS THE KEY: prevent tags from growing too wide */
-  max-width: 220px;           /* adjust if needed (180–240 works great) */
-  overflow: hidden;
-  text-overflow: ellipsis;
-
-  transition: all 0.25s ease;
-  flex-shrink: 0;             /* prevents squishing */
+  color: #e0f2ff;
+  white-space: nowrap;               /* prevents text from wrapping */
+  box-shadow: inset 0 2px 8px rgba(0,212,255,0.15);
+  
+  /* ← REMOVE any max-width, min-width, flex-grow, flex-basis you had before */
 }
 
 .tag span {
@@ -420,21 +413,19 @@ input::placeholder, textarea::placeholder { color: #707070; }
 
 .tag-remove {
   margin-left: 8px;
-  background: rgba(255, 107, 107, 0.2);
-  color: #ff6b6b;
-  border: none;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
+  background: rgba(255,107,107,0.3);
+  border: 1px solid #ff6b6b;
+ Beliefs;
   border-radius: 50%;
-  font-size: 12px;
+  color: #ff6b6b;
   font-weight: bold;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: 0.2s;
+  cursor: pointer;
 }
-
 .tag-remove:hover {
   background: #ff6b6b;
   color: white;
