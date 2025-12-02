@@ -373,42 +373,57 @@ input::placeholder, textarea::placeholder { color: #707070; }
   margin-bottom: 12px;
 }
 
+/* IMPROVED TAGS – compact, responsive, good-looking */
 .tags-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-bottom: 12px;
-  width: fit-content;
+  gap: 8px;                 /* a bit more breathing room */
+  row-gap: 12px;            /* better vertical spacing when wrapping */
 }
+
 .tag {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   background: linear-gradient(135deg, rgba(76, 181, 255, 0.15) 0%, rgba(100, 255, 159, 0.15) 100%);
   border: 1px solid rgba(76, 181, 255, 0.3);
-  padding: 3px 6px;
-  border-radius: 12px;
-  font-size: 10px;
-  color: #c0c0c0;
-  transition: all 0.3s;
+  padding: 6px 10px;        /* smaller padding */
+  border-radius: 20px;      /* pill shape */
+  font-size: 11px;          /* smaller font */
+  font-weight: 600;
+  color: #c0e0ff;
+  line-height: 1;
+  max-width: 100%;          /* important for long tags */
+  overflow: hidden;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tag span {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .tag:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(76, 181, 255, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(76, 181, 255, 0.25);
+  border-color: #00d4ff;
 }
 
 .tag-remove {
+  margin-left: 6px;
   background: none;
   border: none;
   color: #ff6b6b;
+  font-size: 14px;
+  font-weight: bold;
   cursor: pointer;
-  font-size: 12px;
-  padding: 0 2px;
-  margin-left: 3px;
+  padding: 0 4px;
+  opacity: 0.7;
   transition: 0.2s;
 }
 
 .tag-remove:hover {
+  opacity: 1;
   transform: scale(1.3);
 }
 
