@@ -1980,9 +1980,9 @@ function goToLanding() {
   }
   
   section.style.display = 'block';
-  container.innerHTML = items.map(item => `
+ container.innerHTML = items.map(item => `
     <div class="tag">
-      <span>${item}</span>
+      <span style="white-space: nowrap; flex: none;">${item}</span>
       <button class="tag-remove" onclick="removeTag('${type}', '${item}')">×</button>
     </div>
   `).join('');
