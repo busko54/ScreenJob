@@ -378,30 +378,29 @@ input::placeholder, textarea::placeholder { color: #707070; }
 .tags-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 9px;
-  padding: 12px 0;
+  gap: 6px;
+  margin-bottom: 12px;
 }
 
 .tag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 26px;
-  padding: 0 8px;                  /* ← ultra-tight padding (this is what you wanted) */
-  background: transparent;        /* no fill at all */
-  border: 1.5px solid #00d4ff;     /* thin cyan border */
-  border-radius: 6px;              /* slight rounding like your example */
-  font-size: 13px;
-  font-weight: 700;
+  gap: 4px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1.5px solid #00d4ff;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
   color: #e0f4ff;
   white-space: nowrap;
   transition: all 0.2s;
+  height: auto;
+  line-height: 1;
 }
 
 .tag span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: inline;
 }
 
 .tag:hover {
@@ -410,17 +409,18 @@ input::placeholder, textarea::placeholder { color: #707070; }
 }
 
 .tag-remove {
-  width: 16px;
-  height: 16px;
-  background: transparent;
+  background: none;
+  border: none;
   color: #ff6b6b;
   font-size: 14px;
-  font-weight: bold;
+  padding: 0;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  line-height: 1;
 }
+
 .tag-remove:hover {
   color: #ff3333;
 }
