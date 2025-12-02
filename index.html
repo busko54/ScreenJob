@@ -1228,12 +1228,16 @@ window.extractedData = {
 };
 
 // Display sections only if they have data
-displayExtractedSection('skills', window.extractedData.skills, 'extractedSkillsSection');
-displayExtractedSection('certifications', window.extractedData.certifications, 'extractedCertsSection');
-if (window.extractedData.other.length > 0) {
+// Display sections only if they have data
+if (window.extractedData.skills && window.extractedData.skills.length > 0) {
+  displayExtractedSection('skills', window.extractedData.skills, 'extractedSkillsSection');
+}
+if (window.extractedData.certifications && window.extractedData.certifications.length > 0) {
+  displayExtractedSection('certifications', window.extractedData.certifications, 'extractedCertsSection');
+}
+if (window.extractedData.other && window.extractedData.other.length > 0) {
   displayExtractedSection('other', window.extractedData.other, 'extractedOtherSection');
 }
-
 
   
 } else {
@@ -1998,11 +2002,21 @@ function goToLanding() {
   document.getElementById('landingPage').style.display = 'flex';
 }
 
-   function displayExtractedSection(type, items, sectionId) {
+  function displayExtractedSection(type, items, sectionId) {
   const section = document.getElementById(sectionId);
+  if (!section) {
+    console.warn('Section not found:', sectionId);
+    return;
+  }
+  
   const container = document.getElementById(type === 'skills' ? 'skillsTagsContainer' : 
                                           type === 'certifications' ? 'certsTagsContainer' : 
                                           'otherTagsContainer');
+  
+  if (!container) {
+    console.warn('Container not found for type:', type);
+    return;
+  }
   
   if (items.length === 0) {
     section.style.display = 'none';
