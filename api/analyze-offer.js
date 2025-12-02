@@ -41,6 +41,7 @@ USER PROFILE:
 - Company size: ${profile.currentCompanySize}
 - Priorities (1-5): Salary=${profile.priority_salary}, Balance=${profile.priority_balance}, Growth=${profile.priority_growth}, Stability=${profile.priority_stability}, Remote=${profile.priority_remote}, Brand=${profile.priority_brand}
 ${profile.resumeData ? `- Background: ${profile.resumeData}` : ''}
+${profile.achievements ? `- Professional Achievements: ${profile.achievements}` : ''}
 JOB OFFER:
 - Title: ${job.jobTitle} @ ${job.company}
 - Salary: ${job.baseSalary}/year (vs current ${profile.currentSalary})
