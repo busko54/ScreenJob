@@ -376,18 +376,18 @@ input::placeholder, textarea::placeholder { color: #707070; }
 .tags-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
   margin-bottom: 12px;
 }
 .tag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   background: linear-gradient(135deg, rgba(76, 181, 255, 0.15) 0%, rgba(100, 255, 159, 0.15) 100%);
   border: 1px solid rgba(76, 181, 255, 0.3);
-  padding: 6px 10px;
-  border-radius: 16px;
-  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 14px;
+  font-size: 11px;
   color: #c0c0c0;
   transition: all 0.3s;
   white-space: nowrap;
@@ -395,23 +395,17 @@ input::placeholder, textarea::placeholder { color: #707070; }
   flex: none;
 }
 
-.tag:hover {
-  background: linear-gradient(135deg, rgba(76, 181, 255, 0.25) 0%, rgba(100, 255, 159, 0.25) 100%);
-  border-color: rgba(76, 181, 255, 0.5);
-}
-
 .tag-remove {
   background: none;
   border: none;
   color: #ff6b6b;
   cursor: pointer;
-  font-size: 16px;
-  padding: 0;
+  font-size: 14px;
+  padding: 0 2px;
   display: flex;
   align-items: center;
   transition: 0.2s;
 }
-
 .tag-remove:hover {
   transform: scale(1.3);
 }
