@@ -1225,6 +1225,9 @@ async function extractResumeData() {
     if (extracted.yearsOfExperience) {
       document.getElementById('yearsExp').value = extracted.yearsOfExperience;
     }
+   if (extracted.achievements && extracted.achievements.length > 0) {
+  document.getElementById('achievements').value = extracted.achievements.join(', ');
+}
 
     btn.innerHTML = '✅ Extracted!';
     setTimeout(() => {
