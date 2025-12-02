@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'API key not configured' });
   }
   try {
-    const prompt = `Extract comprehensive career information from this resume. Return ONLY valid JSON (no markdown):
+   const prompt = `Extract comprehensive career information from this resume. Return ONLY valid JSON (no markdown):
 {
   "currentJobTitle": "string",
   "currentCompany": "string",
@@ -43,6 +43,7 @@ export default async function handler(req, res) {
   "education": "highest degree and school",
   "certifications": ["cert1", "cert2", "cert3"],
   "skills": ["skill1", "skill2", "skill3", "skill4"],
+  "achievements": ["award1", "award2", "achievement1"],
   "companies": [{"name": "string", "years": number}],
   "careerSummary": "2-3 sentence summary of career progression and specialization"
 }
