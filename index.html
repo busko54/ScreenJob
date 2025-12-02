@@ -1167,11 +1167,12 @@ function goToJobScreen() {
       return text;
     }
 
-    async function extractResumeData() {
+async function extractResumeData() {
   if (!resumeData) return;
 
   const btn = document.getElementById('extractResumeBtn');
-btn.innerHTML = '<span class="spinner-big"></span> Extracting...';  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-big"></span> Extracting...';
+  btn.disabled = true;
 
   try {
     const response = await fetch("/api/extract-resume", {
@@ -1183,64 +1184,28 @@ btn.innerHTML = '<span class="spinner-big"></span> Extracting...';  btn.disabled
     if (!response.ok) throw new Error('API error');
     const extracted = await response.json();
 
-    
-    
-
     if (extracted.currentJobTitle) {
       document.getElementById('currentJobTitle').value = extracted.currentJobTitle;
     }
 
-    // Show skill levels section if resume has skills/certs
-// Store extracted data
-window.extractedData = {
-  skills: extracted.skills || [],
-  certifications: extracted.certifications || [],
-  other: []
-};
+    // Store extracted data
+    window.extractedData = {
+      skills: extracted.skills || [],
+      certifications: extracted.certifications || [],
+      other: []
+    };
 
-// Display sections only if they have data
-if (window.extractedData.skills && window.extractedData.skills.length > 0) {
-  displayExtractedSection('skills', window.extractedData.skills, 'extractedSkillsSection');
-}
-if (window.extractedData.certifications && window.extractedData.certifications.length > 0) {
-  displayExtractedSection('certifications', window.extractedData.certifications, 'extractedCertsSection');
-}
-if (window.extractedData.other && window.extractedData.other.length > 0) {
-  displayExtractedSection('other', window.extractedData.other, 'extractedOtherSection');
-}
-  // Build HTML for all skills
- // Build HTML for all skills
+    // Display sections only if they have data
+    if (window.extractedData.skills && window.extractedData.skills.length > 0) {
+      displayExtractedSection('skills', window.extractedData.skills, 'extractedSkillsSection');
+    }
+    if (window.extractedData.certifications && window.extractedData.certifications.length > 0) {
+      displayExtractedSection('certifications', window.extractedData.certifications, 'extractedCertsSection');
+    }
+    if (window.extractedData.other && window.extractedData.other.length > 0) {
+      displayExtractedSection('other', window.extractedData.other, 'extractedOtherSection');
+    }
 
-
-
-
-  
-// Store extracted data
-window.extractedData = {
-  skills: extracted.skills || [],
-  certifications: extracted.certifications || [],
-  other: []
-};
-
-// Display sections only if they have data
-// Display sections only if they have data
-if (window.extractedData.skills && window.extractedData.skills.length > 0) {
-  displayExtractedSection('skills', window.extractedData.skills, 'extractedSkillsSection');
-}
-if (window.extractedData.certifications && window.extractedData.certifications.length > 0) {
-  displayExtractedSection('certifications', window.extractedData.certifications, 'extractedCertsSection');
-}
-if (window.extractedData.other && window.extractedData.other.length > 0) {
-  displayExtractedSection('other', window.extractedData.other, 'extractedOtherSection');
-}
-
-  
-} else {
-  document.getElementById('technicalProficiencySection').style.display = 'none';
-}
-
-
-    
     if (extracted.currentCompany) {
       document.getElementById('currentCompany').value = extracted.currentCompany;
     }
@@ -1248,20 +1213,21 @@ if (window.extractedData.other && window.extractedData.other.length > 0) {
       document.getElementById('yearsExp').value = extracted.yearsOfExperience;
     }
 
-btn.innerHTML = '✅ Extracted!';
+    btn.innerHTML = '✅ Extracted!';
     setTimeout(() => {
-          btn.textContent = '🤖 Extract from Resume';
-          btn.disabled = false;
-        }, 2000);
-      } catch (error) {
-        console.error('Extraction error:', error);
-        btn.textContent = '❌ Failed';
-        setTimeout(() => {
-          btn.textContent = '🤖 Extract from Resume';
-          btn.disabled = false;
-        }, 2000);
-      }
-    }
+      btn.textContent = '🤖 Extract from Resume';
+      btn.disabled = false;
+    }, 2000);
+
+  } catch (error) {
+    console.error('Extraction error:', error);
+    btn.textContent = '❌ Failed';
+    setTimeout(() => {
+      btn.textContent = '🤖 Extract from Resume';
+      btn.disabled = false;
+    }, 2000);
+  }
+}
 
     async function extractJobData() {
       const jobPosting = document.getElementById('jobPostingPaste').value.trim();
