@@ -356,73 +356,105 @@ input::placeholder, textarea::placeholder { color: #707070; }
   color: #a0a0a0;
   font-size: 14px;
 }
-    /* SKILL SLIDERS */
-.skill-slider-group {
-  background: rgba(76, 181, 255, 0.05);
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 12px;
-  border: 1px solid rgba(76, 181, 255, 0.2);
+  /* EXTRACTED DATA TAGS */
+.extracted-section {
+  margin-bottom: 25px;
+  display: none;
 }
 
-.skill-slider-label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
+.extracted-section.show {
+  display: block;
 }
 
-.skill-name {
-  font-weight: 600;
-  color: #00d4ff;
-  font-size: 14px;
-}
-
-.skill-level-display {
-  font-size: 12px;
-  color: #64ff9f;
+.extracted-section h3 {
+  font-size: 16px;
   font-weight: 700;
-  background: rgba(100, 255, 159, 0.2);
-  padding: 2px 8px;
-  border-radius: 4px;
+  color: #00d4ff;
+  margin-bottom: 12px;
 }
 
-.skill-slider-input {
-  width: 100%;
-  height: 6px;
-  border-radius: 3px;
-  background: linear-gradient(90deg, rgba(76, 181, 255, 0.2) 0%, rgba(100, 255, 159, 0.2) 100%);
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(76, 181, 255, 0.15) 0%, rgba(100, 255, 159, 0.15) 100%);
+  border: 1px solid rgba(76, 181, 255, 0.3);
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #c0c0c0;
+  transition: all 0.3s;
+}
+
+.tag:hover {
+  background: linear-gradient(135deg, rgba(76, 181, 255, 0.25) 0%, rgba(100, 255, 159, 0.25) 100%);
+  border-color: rgba(76, 181, 255, 0.5);
+}
+
+.tag-remove {
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: 0.2s;
+}
+
+.tag-remove:hover {
+  transform: scale(1.3);
+}
+
+.add-tag-input {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.add-tag-input input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid rgba(76, 181, 255, 0.3);
+  background: rgba(76, 181, 255, 0.05);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #e0e0e0;
+}
+
+.add-tag-input input::placeholder {
+  color: #707070;
+}
+
+.add-tag-input input:focus {
   outline: none;
-  -webkit-appearance: none;
-  appearance: none;
-  cursor: pointer;
+  border-color: #00d4ff;
+  background: rgba(76, 181, 255, 0.1);
 }
 
-.skill-slider-input::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #00d4ff 0%, #64ff9f 100%);
+.add-tag-input button {
+  padding: 10px 16px;
+  background: rgba(76, 181, 255, 0.2);
+  border: 1px solid rgba(76, 181, 255, 0.3);
+  color: #00d4ff;
+  border-radius: 8px;
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
-  border: 2px solid #0f0f1e;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s;
 }
 
-.skill-slider-input::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #00d4ff 0%, #64ff9f 100%);
-  cursor: pointer;
-  box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
-  border: 2px solid #0f0f1e;
-}
-
-.skill-slider-input:hover::-webkit-slider-thumb {
-  box-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
-  transform: scale(1.2);
+.add-tag-input button:hover {
+  background: rgba(76, 181, 255, 0.3);
+  border-color: rgba(76, 181, 255, 0.5);
 }
     
 /* PROGRESS BAR */
@@ -813,11 +845,32 @@ input::placeholder, textarea::placeholder { color: #707070; }
 
  
 
-        <div class="section" id="technicalProficiencySection" style="display: none;">
-  <h2>Skill Levels</h2>
-  <p style="color: #a0a0a0; font-size: 13px; margin-bottom: 15px;">Rate your proficiency in the skills we found on your resume</p>
-  
-  <div id="skillLevelFields"></div>
+       <!-- EXTRACTED DATA SECTIONS -->
+<div class="section" id="extractedSkillsSection" class="extracted-section">
+  <h3>📌 Skills</h3>
+  <div id="skillsTagsContainer" class="tags-container"></div>
+  <div class="add-tag-input">
+    <input type="text" id="addSkillInput" placeholder="Add another skill...">
+    <button onclick="addSkill()">Add</button>
+  </div>
+</div>
+
+<div class="section" id="extractedCertsSection" class="extracted-section">
+  <h3>🎓 Certifications</h3>
+  <div id="certsTagsContainer" class="tags-container"></div>
+  <div class="add-tag-input">
+    <input type="text" id="addCertInput" placeholder="Add another cert...">
+    <button onclick="addCert()">Add</button>
+  </div>
+</div>
+
+<div class="section" id="extractedOtherSection" class="extracted-section">
+  <h3>✨ Other Qualifications</h3>
+  <div id="otherTagsContainer" class="tags-container"></div>
+  <div class="add-tag-input">
+    <input type="text" id="addOtherInput" placeholder="Add another item...">
+    <button onclick="addOther()">Add</button>
+  </div>
 </div>
         <div class="section">
           <h2>Additional Notes</h2>
@@ -1162,29 +1215,27 @@ if ((extracted.certifications && extracted.certifications.length > 0) ||
   
   // Build HTML for all skills
  // Build HTML for all skills
-  allSkills.forEach(skill => {
-    skillHTML += `
-    <div class="skill-slider-group">
-      <div class="skill-slider-label">
-        <span class="skill-name">${skill}</span>
-        <span class="skill-level-display" data-display="${skill}">Beginner</span>
-      </div>
-      <input type="range" class="skill-slider-input skillLevel" data-skill="${skill}" min="1" max="3" value="1">
-    </div>
-    `;
-  });
+
+
+
+
   
-  document.getElementById('skillLevelFields').innerHTML = skillHTML;
+// Store extracted data
+window.extractedData = {
+  skills: extracted.skills || [],
+  certifications: extracted.certifications || [],
+  other: []
+};
+
+// Display sections only if they have data
+displayExtractedSection('skills', window.extractedData.skills, 'extractedSkillsSection');
+displayExtractedSection('certifications', window.extractedData.certifications, 'extractedCertsSection');
+if (window.extractedData.other.length > 0) {
+  displayExtractedSection('other', window.extractedData.other, 'extractedOtherSection');
+}
+
+
   
-  // Add event listeners for slider updates
-  document.querySelectorAll('.skill-slider-input').forEach(slider => {
-    slider.addEventListener('input', (e) => {
-      const value = e.target.value;
-      const display = e.target.parentElement.querySelector('[data-display]');
-      const levels = ['Beginner', 'Intermediate', 'Expert'];
-      display.textContent = levels[value - 1];
-    });
-  });
 } else {
   document.getElementById('technicalProficiencySection').style.display = 'none';
 }
@@ -1342,13 +1393,7 @@ const progressInterval = setInterval(() => {
   topTool: document.getElementById('topTool').value,
   toolLevel: document.getElementById('toolLevel').value,
     resumeData: resumeData ? resumeData.text.substring(0, 2000) : null,
-    skillLevels: Array.from(document.querySelectorAll('.skillLevel')).reduce((acc, slider) => {
-    const skill = slider.dataset.skill;
-    const value = slider.value;
-    const levels = ['Beginner', 'Intermediate', 'Expert'];
-    acc[skill] = levels[value - 1];
-    return acc;
-  }, {}),
+    extractedData: window.extractedData || { skills: [], certifications: [], other: [] },
     
   };
 
@@ -1951,6 +1996,61 @@ function goToLanding() {
   localStorage.setItem('ScreenJob_currentScreen', 'landing');
   document.getElementById('appContainer').classList.remove('show');
   document.getElementById('landingPage').style.display = 'flex';
+}
+
+   function displayExtractedSection(type, items, sectionId) {
+  const section = document.getElementById(sectionId);
+  const container = document.getElementById(type === 'skills' ? 'skillsTagsContainer' : 
+                                          type === 'certifications' ? 'certsTagsContainer' : 
+                                          'otherTagsContainer');
+  
+  if (items.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  
+  section.style.display = 'block';
+  container.innerHTML = items.map(item => `
+    <div class="tag">
+      <span>${item}</span>
+      <button class="tag-remove" onclick="removeTag('${type}', '${item}')">×</button>
+    </div>
+  `).join('');
+}
+
+function removeTag(type, item) {
+  window.extractedData[type] = window.extractedData[type].filter(i => i !== item);
+  const sectionId = type === 'skills' ? 'extractedSkillsSection' : 
+                   type === 'certifications' ? 'extractedCertsSection' : 
+                   'extractedOtherSection';
+  displayExtractedSection(type, window.extractedData[type], sectionId);
+}
+
+function addSkill() {
+  const input = document.getElementById('addSkillInput');
+  if (input.value.trim()) {
+    window.extractedData.skills.push(input.value.trim());
+    displayExtractedSection('skills', window.extractedData.skills, 'extractedSkillsSection');
+    input.value = '';
+  }
+}
+
+function addCert() {
+  const input = document.getElementById('addCertInput');
+  if (input.value.trim()) {
+    window.extractedData.certifications.push(input.value.trim());
+    displayExtractedSection('certifications', window.extractedData.certifications, 'extractedCertsSection');
+    input.value = '';
+  }
+}
+
+function addOther() {
+  const input = document.getElementById('addOtherInput');
+  if (input.value.trim()) {
+    window.extractedData.other.push(input.value.trim());
+    displayExtractedSection('other', window.extractedData.other, 'extractedOtherSection');
+    input.value = '';
+  }
 }
   </script>
 </body>
