@@ -40,9 +40,11 @@ export default async function handler(req, res) {
   "currentJobTitle": "string",
   "currentCompany": "string",
   "yearsOfExperience": number,
+  "education": "highest degree and school",
+  "certifications": ["cert1", "cert2", "cert3"],
+  "skills": ["skill1", "skill2", "skill3", "skill4"],
   "companies": [{"name": "string", "years": number}],
-  "skills": ["skill1", "skill2"],
-  "careerSummary": "2-3 sentence summary of career progression"
+  "careerSummary": "2-3 sentence summary of career progression and specialization"
 }
 Resume:
 ${resumeText}`;
