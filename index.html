@@ -1410,7 +1410,7 @@ const progressInterval = setInterval(() => {
     concerns: document.getElementById('concerns').value
   };
 
-  try {
+ try {
     const response = await fetch("/api/analyze-offer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1422,33 +1422,35 @@ const progressInterval = setInterval(() => {
     const salaryData = getSalaryData(jobTitle);
 
     // Complete the progress bar
-clearInterval(progressInterval);
-progressBar.style.width = '100%';
+    clearInterval(progressInterval);
+    progressBar.style.width = '100%';
 
-// Remove progress bar after animation
-setTimeout(() => {
-  progressContainer.remove();
-}, 500);
+    // Remove progress bar after animation
+    setTimeout(() => {
+      progressContainer.remove();
+    }, 500);
     
     decisions.push({ ...aiAnalysis, job, profile, salaryData, timestamp: new Date().toLocaleString() });
     displayResult(aiAnalysis, salaryData, job, profile);
     showScreen('resultScreen');
-    
     showFeedbackTab();
-} catch (error) {
-  console.error('Analysis error:', error);
-  alert('Error during analysis. Please try again.');
-}
-  finally {
-  btn.textContent = 'Analyze This Offer';
-  btn.disabled = false;
-  clearInterval(progressInterval);
-  
-  // Remove progress bar if it exists
-  const container = document.getElementById('analysisProgressContainer');
-  if (container) container.remove();
-}
-}
+
+  } catch (error) {
+    console.error('Analysis error:', error);
+    alert('Error during analysis. Please try again.');
+  } finally {
+    btn.textContent = 'Analyze This Offer';
+    btn.disabled = false;
+    clearInterval(progressInterval);
+    
+    // Remove progress bar if it exists
+    const container = document.getElementById('analysisProgressContainer');
+    if (container) container.remove();
+  }
+
+
+
+   
 
     function getSalaryData(jobTitle) {
       // Try to get real BLS data, fallback to estimates if API fails
