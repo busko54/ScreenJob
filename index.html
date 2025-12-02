@@ -877,14 +877,7 @@ input::placeholder, textarea::placeholder { color: #707070; }
   </div>
 </div>
 
-<div class="section" id="extractedOtherSection" class="extracted-section">
-  <h3>✨ Other Qualifications</h3>
-  <div id="otherTagsContainer" class="tags-container"></div>
-  <div class="add-tag-input">
-    <input type="text" id="addOtherInput" placeholder="Add another item...">
-    <button onclick="addOther()">Add</button>
-  </div>
-</div>
+
 
 <div class="section">
   <h2>Professional Achievements (Optional)</h2>
@@ -2007,9 +2000,7 @@ function goToLanding() {
 
 function removeTag(type, item) {
   window.extractedData[type] = window.extractedData[type].filter(i => i !== item);
-  const sectionId = type === 'skills' ? 'extractedSkillsSection' : 
-                   type === 'certifications' ? 'extractedCertsSection' : 
-                   'extractedOtherSection';
+  const sectionId = type === 'skills' ? 'extractedSkillsSection' : 'extractedCertsSection';
   displayExtractedSection(type, window.extractedData[type], sectionId);
 }
 
@@ -2031,14 +2022,7 @@ function addCert() {
   }
 }
 
-function addOther() {
-  const input = document.getElementById('addOtherInput');
-  if (input.value.trim()) {
-    window.extractedData.other.push(input.value.trim());
-    displayExtractedSection('other', window.extractedData.other, 'extractedOtherSection');
-    input.value = '';
-  }
-}
+
   </script>
 </body>
 </html>
