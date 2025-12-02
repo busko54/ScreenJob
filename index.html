@@ -1308,7 +1308,7 @@ button.innerHTML = '<span class="spinner-big"></span> Extracting...';      butto
       }
     }
 
-   async function analyzeOffer() {
+async function analyzeOffer() {
   const jobTitle = document.getElementById('jobTitle').value.trim();
   const company = document.getElementById('company').value.trim();
   const currentSalary = parseInt(document.getElementById('currentSalary').value) || 0;
@@ -1319,7 +1319,6 @@ button.innerHTML = '<span class="spinner-big"></span> Extracting...';      butto
     return;
   }
 
-  // Reject obviously fake data
   if (jobTitle.length < 3 || company.length < 3) {
     alert('Please enter a real job title and company name');
     return;
@@ -1335,13 +1334,11 @@ button.innerHTML = '<span class="spinner-big"></span> Extracting...';      butto
     return;
   }
 
-  // If this is the SECOND analysis or later, show payment modal
   if (analysisCount > 0) {
     showPaymentModal();
     return;
   }
 
-  // First analysis is FREE - continue
   analysisCount++;
   localStorage.setItem('ScreenJob_analysisCount', analysisCount);
 
@@ -1352,27 +1349,20 @@ button.innerHTML = '<span class="spinner-big"></span> Extracting...';      butto
   });
 
   const btn = document.getElementById('analyzeBtn');
+  const progressContainer = document.createElement('div');
+  progressContainer.id = 'analysisProgressContainer';
+  progressContainer.className = 'analysis-progress';
+  progressContainer.innerHTML = '<div class="analysis-progress-bar"></div>';
+  btn.parentElement.insertBefore(progressContainer, btn);
+  btn.innerHTML = '<span class="spinner-big"></span> AI Analyzing...';
+  btn.disabled = true;
 
-// Create progress bar
-const progressContainer = document.createElement('div');
-progressContainer.id = 'analysisProgressContainer';
-progressContainer.className = 'analysis-progress';
-progressContainer.innerHTML = '<div class="analysis-progress-bar"></div>';
-
-// Insert progress bar BEFORE the button
-btn.parentElement.insertBefore(progressContainer, btn);
-
-// Update button
-btn.innerHTML = '<span class="spinner-big"></span> AI Analyzing...';
-btn.disabled = true;
-
-// Simulate progress (0% to 90%)
-let progress = 0;
-const progressBar = progressContainer.querySelector('.analysis-progress-bar');
-const progressInterval = setInterval(() => {
-  progress += Math.random() * 30;
-  progressBar.style.width = Math.min(progress, 90) + '%';
-}, 300);
+  let progress = 0;
+  const progressBar = progressContainer.querySelector('.analysis-progress-bar');
+  const progressInterval = setInterval(() => {
+    progress += Math.random() * 30;
+    progressBar.style.width = Math.min(progress, 90) + '%';
+  }, 300);
 
   const profile = {
     currentJobTitle: document.getElementById('currentJobTitle').value,
@@ -1387,13 +1377,8 @@ const progressInterval = setInterval(() => {
     priority_stability: parseInt(document.getElementById('priorityStability').value),
     priority_remote: parseInt(document.getElementById('priorityRemote').value),
     priority_brand: parseInt(document.getElementById('priorityBrand').value),
-    topLanguage: document.getElementById('topLanguage').value,
-  languageLevel: document.getElementById('languageLevel').value,
-  topTool: document.getElementById('topTool').value,
-  toolLevel: document.getElementById('toolLevel').value,
     resumeData: resumeData ? resumeData.text.substring(0, 2000) : null,
-    extractedData: window.extractedData || { skills: [], certifications: [], other: [] },
-    
+    extractedData: window.extractedData || { skills: [], certifications: [], other: [] }
   };
 
   const job = {
@@ -1410,7 +1395,7 @@ const progressInterval = setInterval(() => {
     concerns: document.getElementById('concerns').value
   };
 
- try {
+  try {
     const response = await fetch("/api/analyze-offer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1421,11 +1406,9 @@ const progressInterval = setInterval(() => {
     const aiAnalysis = await response.json();
     const salaryData = getSalaryData(jobTitle);
 
-    // Complete the progress bar
     clearInterval(progressInterval);
     progressBar.style.width = '100%';
 
-    // Remove progress bar after animation
     setTimeout(() => {
       progressContainer.remove();
     }, 500);
@@ -1442,17 +1425,12 @@ const progressInterval = setInterval(() => {
     btn.textContent = 'Analyze This Offer';
     btn.disabled = false;
     clearInterval(progressInterval);
-    
-    // Remove progress bar if it exists
     const container = document.getElementById('analysisProgressContainer');
     if (container) container.remove();
   }
+}
 
-
-
-   
-
-    function getSalaryData(jobTitle) {
+function getSalaryData(jobTitle) {
       // Try to get real BLS data, fallback to estimates if API fails
       fetchBLSSalaryData(jobTitle).then(data => {
         if (data) {
