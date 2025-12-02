@@ -413,12 +413,15 @@ input::placeholder, textarea::placeholder { color: #707070; }
   border: none;
   color: #ff6b6b;
   font-size: 14px;
-  padding: 0;
+  padding: 0 !important;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
+  flex: none !important;
+  min-width: auto !important;
+  min-height: auto !important;
 }
 
 .tag-remove:hover {
