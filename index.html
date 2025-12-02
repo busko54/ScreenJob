@@ -783,6 +783,13 @@ input::placeholder, textarea::placeholder { color: #707070; }
   </div>
 </div>
 
+
+        <div class="section" id="technicalProficiencySection" style="display: none;">
+  <h2>Skill Levels</h2>
+  <p style="color: #a0a0a0; font-size: 13px; margin-bottom: 15px;">Rate your proficiency in the skills we found on your resume</p>
+  
+  <div id="skillLevelFields"></div>
+</div>
         <div class="section">
           <h2>Additional Notes</h2>
           <div class="form-group">
@@ -1094,9 +1101,58 @@ btn.innerHTML = '<span class="spinner-big"></span> Extracting...';  btn.disabled
     if (!response.ok) throw new Error('API error');
     const extracted = await response.json();
 
+    
+    
+
     if (extracted.currentJobTitle) {
       document.getElementById('currentJobTitle').value = extracted.currentJobTitle;
     }
+
+    // Show skill levels section if resume has skills/certs
+if ((extracted.certifications && extracted.certifications.length > 0) || 
+    (extracted.skills && extracted.skills.length > 0)) {
+  
+  document.getElementById('technicalProficiencySection').style.display = 'block';
+  
+  let skillHTML = '';
+  const allSkills = [];
+  
+  // Add certifications
+  if (extracted.certifications && extracted.certifications.length > 0) {
+    extracted.certifications.forEach(cert => {
+      allSkills.push(cert);
+    });
+  }
+  
+  // Add skills
+  if (extracted.skills && extracted.skills.length > 0) {
+    extracted.skills.forEach(skill => {
+      allSkills.push(skill);
+    });
+  }
+  
+  // Build HTML for all skills
+  allSkills.forEach(skill => {
+    skillHTML += `
+    <div class="form-group">
+      <label>${skill}</label>
+      <select class="skillLevel" data-skill="${skill}">
+        <option value="">Select proficiency</option>
+        <option value="Beginner">Beginner</option>
+        <option value="Intermediate">Intermediate</option>
+        <option value="Expert">Expert</option>
+      </select>
+    </div>
+    `;
+  });
+  
+  document.getElementById('skillLevelFields').innerHTML = skillHTML;
+} else {
+  document.getElementById('technicalProficiencySection').style.display = 'none';
+}
+
+
+    
     if (extracted.currentCompany) {
       document.getElementById('currentCompany').value = extracted.currentCompany;
     }
@@ -1247,7 +1303,14 @@ const progressInterval = setInterval(() => {
   languageLevel: document.getElementById('languageLevel').value,
   topTool: document.getElementById('topTool').value,
   toolLevel: document.getElementById('toolLevel').value,
-    resumeData: resumeData ? resumeData.text.substring(0, 2000) : null
+    resumeData: resumeData ? resumeData.text.substring(0, 2000) : null,
+    skillLevels: Array.from(document.querySelectorAll('.skillLevel')).reduce((acc, select) => {
+    const skill = select.dataset.skill;
+    const level = select.value;
+    if (level) acc[skill] = level;
+    return acc;
+  }, {}),
+    
   };
 
   const job = {
