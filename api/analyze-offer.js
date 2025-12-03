@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing profile or job data' });
   }
   try {
-  const prompt = `You are an expert career coach and negotiation strategist. Analyze this job offer comprehensively and provide a logically consistent recommendation.
+const prompt = `You are an expert career coach and negotiation strategist. Analyze this job offer comprehensively and provide a logically consistent recommendation.
 
 CRITICAL - QUALIFICATION CHECK FIRST:
 Before analyzing the offer, check if the candidate meets job requirements:
@@ -45,7 +45,7 @@ RECOMMENDATION RULES:
 - NEGOTIATE (5-7/10): Meets requirements BUT missing benefits/terms OR minor qualification gaps that can be overlooked
 - CONDITIONAL (4-7/10): Missing hard requirements BUT company offers sponsorship/training to get them
 - PASS (0-4/10): Missing critical requirements with no sponsorship OR too many fundamental misalignments
-`;
+
 USER PROFILE:
 - Current: ${profile.currentJobTitle}, ${profile.currentSalary}/year, ${profile.currentHours}h/week
 - Experience: ${profile.yearsExp} years
@@ -53,6 +53,7 @@ USER PROFILE:
 - Priorities (1-5): Salary=${profile.priority_salary}, Balance=${profile.priority_balance}, Growth=${profile.priority_growth}, Stability=${profile.priority_stability}, Remote=${profile.priority_remote}, Brand=${profile.priority_brand}
 ${profile.resumeData ? `- Background: ${profile.resumeData}` : ''}
 ${profile.achievements ? `- Professional Achievements: ${profile.achievements}` : ''}
+
 JOB REQUIREMENTS & QUALIFICATIONS:
 ${job.requirements ? `Required/Preferred: ${job.requirements}` : 'No requirements listed'}
 Your Background: ${profile.yearsExp} years experience | Certifications: ${profile.extractedData?.certifications?.slice(0, 3).join(', ') || 'None listed'} | Key Skills: ${profile.extractedData?.skills?.slice(0, 5).join(', ') || 'None listed'}
@@ -68,10 +69,12 @@ JOB OFFER:
 - Team: ${job.teamSize} people
 - Industry: ${job.industry}
 - Concerns: ${job.concerns || 'None'}
+
 IMPORTANT: Match recommendation to score. Only use NEGOTIATE if 5-7/10. If score is 3/10, must be PASS. If 8+, must be TAKE.
+
 Provide ONLY valid JSON (no markdown, no extra text):
 {
-  "recommendation": "TAKE|PASS|NEGOTIATE",
+  "recommendation": "TAKE|PASS|NEGOTIATE|CONDITIONAL",
   "score": 0-10,
   "confidence": 0-100,
   "scoringBreakdown": {
@@ -80,7 +83,8 @@ Provide ONLY valid JSON (no markdown, no extra text):
     "growth": "explanation of learning/career progression opportunity",
     "stability": "explanation based on company stage",
     "remote": "explanation of work setup vs preference",
-    "brand": "explanation of company prestige impact"
+    "brand": "explanation of company prestige impact",
+    "qualifications": "analysis of whether candidate meets job requirements"
   },
   "strengths": ["strength1", "strength2", "strength3"],
   "weaknesses": ["weakness1", "weakness2", "weakness3"],
