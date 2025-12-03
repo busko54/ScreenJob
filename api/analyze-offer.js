@@ -42,6 +42,10 @@ USER PROFILE:
 - Priorities (1-5): Salary=${profile.priority_salary}, Balance=${profile.priority_balance}, Growth=${profile.priority_growth}, Stability=${profile.priority_stability}, Remote=${profile.priority_remote}, Brand=${profile.priority_brand}
 ${profile.resumeData ? `- Background: ${profile.resumeData}` : ''}
 ${profile.achievements ? `- Professional Achievements: ${profile.achievements}` : ''}
+JOB REQUIREMENTS & QUALIFICATIONS:
+${job.requirements ? `Required/Preferred: ${job.requirements}` : 'No requirements listed'}
+Your Background: ${profile.yearsExp} years experience | Certifications: ${profile.extractedData?.certifications?.slice(0, 3).join(', ') || 'None listed'} | Key Skills: ${profile.extractedData?.skills?.slice(0, 5).join(', ') || 'None listed'}
+
 JOB OFFER:
 - Title: ${job.jobTitle} @ ${job.company}
 - Salary: ${job.baseSalary}/year (vs current ${profile.currentSalary})
