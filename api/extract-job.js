@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'No job posting provided' });
   }
   try {
-    const prompt = `Extract all job details from this posting. Return ONLY valid JSON (no markdown):
+   const prompt = `Extract all job details from this posting. Return ONLY valid JSON (no markdown):
 {
   "jobTitle": "string",
   "company": "string",
@@ -42,7 +42,8 @@ export default async function handler(req, res) {
   "workEnv": "full-remote|hybrid|onsite",
   "fundingStage": "seed|series-a|series-b|growth|public",
   "teamSize": number or null,
-  "industry": "string"
+  "industry": "string",
+  "requirements": "string - List ALL requirements, qualifications, and must-haves from the posting. Include: years of experience, certifications, clearances, degrees, technical skills, soft skills, etc."
 }
 Job posting:
 ${jobPosting}`;
