@@ -41,6 +41,37 @@
     .landing-content { max-width: 900px; color: #fff; position: relative; z-index: 1; }
     .landing h1 { font-size: 72px; margin-bottom: 20px; font-weight: 900; background: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #64ff9f 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -2px; animation: titleReveal 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s backwards; }
 @keyframes titleReveal { 0% { opacity: 0; transform: translateY(40px); filter: blur(10px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0); } }
+   @keyframes titleReveal { 0% { opacity: 0; transform: translateY(40px); filter: blur(10px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0); } }
+
+@keyframes pointingFinger {
+  0% {
+    transform: translateX(0) translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(20px) translateY(-20px) rotate(-15deg);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0) translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+}
+
+.pointing-hand {
+  position: absolute;
+  font-size: 48px;
+  animation: pointingFinger 2s ease-in-out infinite;
+  pointer-events: none;
+  left: 50%;
+  top: -60px;
+  transform-origin: center;
+}
 .landing .tagline { font-size: 28px; margin-bottom: 15px; font-weight: 700; color: #374151; animation: slideInLeft 0.8s ease-out 0.3s backwards; }
 @keyframes slideInLeft { 0% { opacity: 0; transform: translateX(-30px); } 100% { opacity: 1; transform: translateX(0); } }
 .landing .subtitle { font-size: 18px; margin-bottom: 40px; color: #64748b; line-height: 1.8; animation: fadeInUp 0.8s ease-out 0.4s backwards; }
@@ -580,8 +611,10 @@ input::placeholder, textarea::placeholder { color: #9ca3af; }
       <h1>ScreenJob</h1>
       <p class="tagline">Find the right job before you apply.</p>
       <p class="subtitle">AI-powered screening based on YOUR background and priorities. <strong>Skip the wrong jobs. Apply to the right ones.</strong></p>
-      <button class="cta-button" onclick="startApp()">Screen Job Postings →</button>
-
+<div style="position: relative; display: inline-block;">
+  <span class="pointing-hand">👆</span>
+  <button class="cta-button" onclick="startApp()">Screen Job Postings →</button>
+</div>
       <div class="social-proof">
         <p><strong>⭐ 4.9/5</strong> from early users</p>
         <p>"AI actually understood my career trajectory and gave real negotiation advice" - Test User</p>
