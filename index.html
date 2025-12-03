@@ -1285,6 +1285,8 @@ button.innerHTML = '<span class="spinner-big"></span> Extracting...';      butto
         if (extracted.fundingStage) document.getElementById('fundingStage').value = extracted.fundingStage;
         if (extracted.teamSize) document.getElementById('teamSize').value = extracted.teamSize;
         if (extracted.industry) document.getElementById('industry').value = extracted.industry;
+       if (extracted.requirements) document.getElementById('jobRequirements').value = extracted.requirements;
+
 
         button.textContent = '✅ Filled!';
         setTimeout(() => {
