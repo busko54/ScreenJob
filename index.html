@@ -1143,7 +1143,7 @@ input::placeholder, textarea::placeholder { color: #707070; }
 
     function goToProfileScreen() { showScreen('profileScreen'); }
 function goToJobScreen() {
-  if (!resumeData || Object.keys(resumeData).length === 0) {
+  if (!resumeData || !resumeData.text || resumeData.text.trim().length === 0) {
     alert('⚠️ Please upload your resume first to get accurate analysis');
     return;
   }
