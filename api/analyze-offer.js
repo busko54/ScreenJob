@@ -30,11 +30,22 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing profile or job data' });
   }
   try {
-    const prompt = `You are an expert career coach and negotiation strategist. Analyze this job offer comprehensively and provide a logically consistent recommendation.
+  const prompt = `You are an expert career coach and negotiation strategist. Analyze this job offer comprehensively and provide a logically consistent recommendation.
+
+CRITICAL - QUALIFICATION CHECK FIRST:
+Before analyzing the offer, check if the candidate meets job requirements:
+1. Flag HARD REQUIREMENTS missing (clearances, licenses, degrees required)
+2. Flag if underqualified on years of experience (>30% gap = major red flag)
+3. Flag if missing critical certifications listed as required
+4. If missing 2+ hard requirements: Recommend PASS or CONDITIONAL, NOT TAKE
+5. Add qualification concerns to "weaknesses" section
+
 RECOMMENDATION RULES:
-- TAKE (8-10/10): Aligns with priorities, good salary, minimal downsides. Accept as-is.
-- NEGOTIATE (5-7/10): Has potential BUT missing key things (lower salary, worse hours, etc). Worth negotiating ON SPECIFIC ITEMS.
-- PASS (0-4/10): Too many fundamental misalignments. Even if you negotiate, likely won't fix core issues.
+- TAKE (8-10/10): Meets 80%+ of requirements + aligns with priorities + good salary + minimal downsides
+- NEGOTIATE (5-7/10): Meets requirements BUT missing benefits/terms OR minor qualification gaps that can be overlooked
+- CONDITIONAL (4-7/10): Missing hard requirements BUT company offers sponsorship/training to get them
+- PASS (0-4/10): Missing critical requirements with no sponsorship OR too many fundamental misalignments
+`;
 USER PROFILE:
 - Current: ${profile.currentJobTitle}, ${profile.currentSalary}/year, ${profile.currentHours}h/week
 - Experience: ${profile.yearsExp} years
