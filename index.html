@@ -1573,6 +1573,25 @@ function getSalaryData(jobTitle) {
 
     function displayResult(analysis, salaryData, job, profile) {
       lastAnalysis = { analysis, salaryData, job, profile };
+     function displayResult(analysis, salaryData, job, profile) {
+  lastAnalysis = { analysis, salaryData, job, profile };
+  
+  // ADD THESE HERE:
+  const salaryPercent = profile.currentSalary > 0 
+    ? ((job.baseSalary - profile.currentSalary) / profile.currentSalary * 100).toFixed(1)
+    : null;
+  const hoursDiff = profile.currentHours > 0 
+    ? job.hoursPerWeek - profile.currentHours 
+    : null;
+  const hourlyRateCurrent = profile.currentSalary && profile.currentHours > 0 
+    ? (profile.currentSalary / (profile.currentHours * 52)).toFixed(0)
+    : null;
+  const hourlyRateNew = job.baseSalary && job.hoursPerWeek 
+    ? (job.baseSalary / (job.hoursPerWeek * 52)).toFixed(0)
+    : null;
+  
+  const recClass = analysis.recommendation === 'TAKE' ? 'take' : 
+                   analysis.recommendation === 'PASS' ? 'pass' : 'negotiate';
       
       const recClass = analysis.recommendation === 'TAKE' ? 'take' : 
                        analysis.recommendation === 'PASS' ? 'pass' : 'negotiate';
