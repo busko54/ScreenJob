@@ -34,7 +34,7 @@ export default async function handler(req, res) {
 {
   "jobTitle": "string",
   "company": "string",
-  "baseSalary": number or null,
+  "baseSalary": number or null (IMPORTANT: if salary has /week, /month, or /hr, convert to ANNUAL: weekly*52, monthly*12, hourly*2080),
   "equity": "string or null",
   "bonus": "string or null",
   "hoursPerWeek": number or null,
@@ -45,6 +45,14 @@ export default async function handler(req, res) {
   "industry": "string",
   "requirements": "string - List ALL requirements, qualifications, and must-haves from the posting. Include: years of experience, certifications, clearances, degrees, technical skills, soft skills, etc."
 }
+
+SALARY EXTRACTION RULES:
+- If you see "$X/week" → multiply by 52 to get annual
+- If you see "$X/month" → multiply by 12 to get annual
+- If you see "$X/hour" or "$X/hr" → multiply by 2080 to get annual
+- If you see "$X/year" or just "$X" → use as-is (annual)
+- ALWAYS return annual salary as a number
+
 Job posting:
 ${jobPosting}`;
     const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", {
