@@ -1587,7 +1587,8 @@ function getSalaryData(jobTitle) {
   const hourlyRateNew = job.baseSalary && job.hoursPerWeek 
     ? (job.baseSalary / (job.hoursPerWeek * 52)).toFixed(0)
     : null;
-      
+      const percentile = Math.round(((job.baseSalary - salaryData.low) / (salaryData.high - salaryData.low)) * 100);
+
       const recClass = analysis.recommendation === 'TAKE' ? 'take' : 
                        analysis.recommendation === 'PASS' ? 'pass' : 'negotiate';
       
