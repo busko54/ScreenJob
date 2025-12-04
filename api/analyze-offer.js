@@ -1,4 +1,4 @@
-// /api/analyze-offer.js
+// /api/analyze-offer.js - FIXED VERSION
 // Rate limiting - max 10 requests per minute per IP
 const rateLimit = {};
 
@@ -39,6 +39,12 @@ Before analyzing the offer, check if the candidate meets job requirements:
 3. Flag if missing critical certifications listed as required
 4. If missing 2+ hard requirements: Recommend PASS or CONDITIONAL, NOT TAKE
 5. Add qualification concerns to "weaknesses" section
+
+STRENGTHS SECTION RULE - IMPORTANT:
+- If candidate is QUALIFIED (meets 80%+ of requirements): List job offer strengths (salary competitiveness, benefits, growth potential, work-life balance improvements)
+- If candidate is UNQUALIFIED (missing 2+ hard requirements): List ONLY job offer benefits like "Excellent salary: $X/year (Yth percentile)", "Good work-life balance: X hrs/week", "Strong benefits package (health, dental, 401k, housing)"
+- NEVER list candidate background strengths (certs, experience, GPA) in the strengths section if they are unqualified for the role
+- Always be specific with numbers and percentages
 
 RECOMMENDATION RULES:
 - TAKE (8-10/10): Meets 80%+ of requirements + aligns with priorities + good salary + minimal downsides
@@ -86,8 +92,8 @@ Provide ONLY valid JSON (no markdown, no extra text):
     "brand": "explanation of company prestige impact",
     "qualifications": "analysis of whether candidate meets job requirements"
   },
-  "strengths": ["strength1", "strength2", "strength3"],
-  "weaknesses": ["weakness1", "weakness2", "weakness3"],
+  "strengths": ["If qualified: job benefits/opportunity strengths. If unqualified: ONLY list offer benefits with numbers like salary percentile, hours, benefits package"],
+  "weaknesses": ["List ALL qualification gaps, missing hard requirements, and career misalignments. Be specific about what's missing."],
   "negotiableItems": ["item1 - specific thing to push for", "item2"],
   "careerImpact": "2-3 sentences on career trajectory impact",
   "reasoning": "2-3 sentences - WHY this recommendation at this score",
