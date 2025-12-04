@@ -1593,9 +1593,6 @@ function getSalaryData(jobTitle) {
       const recClass = analysis.recommendation === 'TAKE' ? 'take' : 
                        analysis.recommendation === 'PASS' ? 'pass' : 'negotiate';
       
-      const salaryChange = job.baseSalary - profile.currentSalary;
-      const salaryPercent = ((salaryChange / profile.currentSalary) * 100).toFixed(1);
-      const percentile = Math.round(((job.baseSalary - salaryData.low) / (salaryData.high - salaryData.low)) * 100);
       
       let html = `
         <div class="recommendation ${recClass}">${analysis.recommendation}</div>
