@@ -1589,9 +1589,6 @@ function getSalaryData(jobTitle) {
   const hourlyRateNew = job.baseSalary && job.hoursPerWeek 
     ? (job.baseSalary / (job.hoursPerWeek * 52)).toFixed(0)
     : null;
-  
-  const recClass = analysis.recommendation === 'TAKE' ? 'take' : 
-                   analysis.recommendation === 'PASS' ? 'pass' : 'negotiate';
       
       const recClass = analysis.recommendation === 'TAKE' ? 'take' : 
                        analysis.recommendation === 'PASS' ? 'pass' : 'negotiate';
@@ -2076,7 +2073,6 @@ function startApp() {
   document.getElementById('appContainer').classList.add('show');
   showScreen('profileScreen');
 }
-
 // Update goToLanding to clear state
 function goToLanding() {
   localStorage.setItem('ScreenJob_currentScreen', 'landing');
