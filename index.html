@@ -1630,11 +1630,6 @@ function getSalaryData(jobTitle) {
   <p style="font-size: 12px; color: #909090; margin-top: 12px;">📊 Data source: ${salaryData.source || 'Industry estimates'}</p>
   ${job.equity ? `<p><strong>Equity:</strong> ${job.equity}</p>` : ''}
   ${job.bonus ? `<p><strong>Bonus:</strong> ${job.bonus}</p>` : ''}
-  
-  <div style="margin-top: 25px; border-top: 1px solid rgba(59, 130, 246, 0.2); padding-top: 20px;">
-    <h4 style="color: #3b82f6; margin-bottom: 15px;">📊 Real Salary Data</h4>
-    <iframe src="https://www.levels.fyi/charts_embed.html?company=${job.company}&hide_selector=false" height="435" style="width: 100%; border:none;" frameborder="0" scrolling="auto;"></iframe>
-  </div>
 </div>
 
         <div class="pros-cons">
