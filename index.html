@@ -2211,7 +2211,52 @@ function addCert() {
     input.value = '';
   }
 }
-
+// TEMPORARY TEST FUNCTION - ADD THIS AT THE BOTTOM
+function testDisplay() {
+  console.log("🧪 Testing displayResult with fake data...");
+  
+  const fakeAnalysis = {
+    recommendation: "TAKE",
+    score: 8,
+    confidence: 85,
+    reasoning: "This is a test - if you see this, displayResult() works!",
+    careerImpact: "Test career impact message",
+    strengths: ["Test strength 1", "Test strength 2"],
+    weaknesses: ["Test weakness 1"],
+    riskFactors: "Test risk factors",
+    questions: ["Test question 1?", "Test question 2?"],
+    scoringBreakdown: { salary: "Good match", growth: "Excellent" }
+  };
+  
+  const fakeSalary = { 
+    low: 80000, 
+    high: 150000, 
+    median: 120000, 
+    source: 'Test Data' 
+  };
+  
+  const fakeJob = {
+    jobTitle: "Test Engineer",
+    company: "Test Corp",
+    baseSalary: 120000,
+    hoursPerWeek: 40,
+    equity: "1%",
+    bonus: "10%"
+  };
+  
+  const fakeProfile = {
+    currentSalary: 100000,
+    currentHours: 40
+  };
+  
+  try {
+    displayResult(fakeAnalysis, fakeSalary, fakeJob, fakeProfile);
+    showScreen('resultScreen');
+    console.log("✅ Test completed - check if you see results");
+  } catch (error) {
+    console.error("❌ Test failed:", error);
+  }
+}
 
   </script>
 </body>
