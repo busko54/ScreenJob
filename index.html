@@ -1409,6 +1409,7 @@ async function analyzeOffer() {
   const currentSalary = parseInt(document.getElementById('currentSalary').value) || 0;
   const baseSalary = parseInt(document.getElementById('baseSalary').value) || 0;
 
+  // Validation
   if (!jobTitle || !company) {
     alert('Please fill in job title and company');
     return;
@@ -1429,20 +1430,24 @@ async function analyzeOffer() {
     return;
   }
 
+  // Check paywall
   if (analysisCount >= 5) {
     showPaymentModal();
     return;
   }
 
+  // Increment counter
   analysisCount++;
   localStorage.setItem('ScreenJob_analysisCount', analysisCount);
 
+  // Analytics
   gtag('event', 'analyze_offer_clicked', {
     'job_title': jobTitle,
     'company': company,
     'salary': baseSalary
   });
 
+  // UI: Show progress
   const btn = document.getElementById('analyzeBtn');
   const progressContainer = document.createElement('div');
   progressContainer.id = 'analysisProgressContainer';
@@ -1459,6 +1464,7 @@ async function analyzeOffer() {
     progressBar.style.width = Math.min(progress, 90) + '%';
   }, 300);
 
+  // Collect data
   const profile = {
     currentJobTitle: document.getElementById('currentJobTitle').value,
     currentCompany: document.getElementById('currentCompany').value,
@@ -1493,7 +1499,6 @@ async function analyzeOffer() {
   };
 
   try {
-    try {
     const response = await fetch("/api/analyze-offer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1502,9 +1507,6 @@ async function analyzeOffer() {
 
     if (!response.ok) throw new Error('API error');
     const aiAnalysis = await response.json();
-    
-    console.log("✅ API Response:", aiAnalysis); // ← ADD THIS
-    
     const salaryData = getSalaryData(jobTitle);
 
     clearInterval(progressInterval);
@@ -1514,20 +1516,7 @@ async function analyzeOffer() {
       progressContainer.remove();
     }, 500);
     
-    // THIS BLOCK SHOULD APPEAR ONLY ONCE
-    decisions.push({ ...aiAnalysis, job, profile, salaryData, timestamp: new Date().toLocaleString() });
-    
-    console.log("🎯 About to call displayResult()"); // ← ADD THIS
-    displayResult(aiAnalysis, salaryData, job, profile);
-    console.log("✅ displayResult() called"); // ← ADD THIS
-    
-    console.log("🎯 About to show result screen"); // ← ADD THIS
-    showScreen('resultScreen');
-    console.log("✅ Result screen shown"); // ← ADD THIS
-    
-    showFeedbackTab();
-    
-    // THIS BLOCK SHOULD APPEAR ONLY ONCE
+    // Save and display results
     decisions.push({ ...aiAnalysis, job, profile, salaryData, timestamp: new Date().toLocaleString() });
     displayResult(aiAnalysis, salaryData, job, profile);
     showScreen('resultScreen');
