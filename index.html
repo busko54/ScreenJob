@@ -1978,13 +1978,18 @@ document.getElementById('paymentForm').addEventListener('submit', async (e) => {
   }
 });
 
+// ========================================
+// PAYMENT FLOW FIX - Copy this into your index.html
+// Replace the existing runAnalysisAfterPayment() and completePayment() functions
+// ========================================
+
 async function runAnalysisAfterPayment() {
   const jobTitle = document.getElementById('jobTitle').value;
   const company = document.getElementById('company').value;
   const baseSalary = parseInt(document.getElementById('baseSalary').value);
   const currentSalary = parseInt(document.getElementById('currentSalary').value);
 
-const profile = {
+  const profile = {
     currentJobTitle: document.getElementById('currentJobTitle').value,
     currentCompany: document.getElementById('currentCompany').value,
     currentSalary: currentSalary,
@@ -2001,42 +2006,118 @@ const profile = {
     extractedData: window.extractedData || { skills: [], certifications: [], other: [] },
     achievements: document.getElementById('achievements').value
   };
- const job = {
-  jobTitle: jobTitle,
-  company: company,
-  baseSalary: baseSalary,
-  equity: document.getElementById('equity').value,
-  bonus: document.getElementById('bonus').value,
-  hoursPerWeek: parseInt(document.getElementById('hoursPerWeek').value) || 0,
-  workEnv: document.getElementById('workEnv').value,
-  fundingStage: document.getElementById('fundingStage').value,
-  teamSize: parseInt(document.getElementById('teamSize').value) || 0,
-  industry: document.getElementById('industry').value,
-  concerns: document.getElementById('concerns').value,
-  requirements: document.getElementById('jobRequirements').value
-};
-
-  const response = await fetch("/api/analyze-offer", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ profile, job })
-  });
-
-  const aiAnalysis = await response.json();
-  const salaryData = getSalaryData(jobTitle);
   
-  decisions.push({ ...aiAnalysis, job, profile, salaryData, timestamp: new Date().toLocaleString() });
-  lastAnalysis = { analysis: aiAnalysis, salaryData, job, profile };
+  const job = {
+    jobTitle: jobTitle,
+    company: company,
+    baseSalary: baseSalary,
+    equity: document.getElementById('equity').value,
+    bonus: document.getElementById('bonus').value,
+    hoursPerWeek: parseInt(document.getElementById('hoursPerWeek').value) || 0,
+    workEnv: document.getElementById('workEnv').value,
+    fundingStage: document.getElementById('fundingStage').value,
+    teamSize: parseInt(document.getElementById('teamSize').value) || 0,
+    industry: document.getElementById('industry').value,
+    concerns: document.getElementById('concerns').value,
+    requirements: document.getElementById('jobRequirements').value
+  };
+
+  try {
+    const response = await fetch("/api/analyze-offer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile, job })
+    });
+
+    if (!response.ok) throw new Error('Analysis failed');
+    
+    const aiAnalysis = await response.json();
+    const salaryData = getSalaryData(jobTitle);
+    
+    decisions.push({ ...aiAnalysis, job, profile, salaryData, timestamp: new Date().toLocaleString() });
+    lastAnalysis = { analysis: aiAnalysis, salaryData, job, profile };
+    
+    // ✅ CRITICAL FIX: Display results immediately after analysis completes
+    displayResult(aiAnalysis, salaryData, job, profile);
+    
+    return true; // Signal success
+  } catch (error) {
+    console.error('Analysis error after payment:', error);
+    alert('Analysis failed. Please contact support for a refund.');
+    return false; // Signal failure
+  }
 }
 
-function completePayment() {
+async function completePayment() {
   closePaymentModal();
-  if (lastAnalysis) {
-    const { analysis, salaryData, job, profile } = lastAnalysis;
-    displayResult(analysis, salaryData, job, profile);
-  }
+  
+  // Show loading state immediately
   showScreen('resultScreen');
+  document.getElementById('resultContent').innerHTML = `
+    <div style="text-align: center; padding: 40px;">
+      <div class="spinner-big"></div>
+      <p style="color: #6b7280; margin-top: 20px;">Analyzing your offer...</p>
+    </div>
+  `;
+  
+  // Wait for analysis to complete, then show results
+  const success = await runAnalysisAfterPayment();
+  
+  if (!success) {
+    // If analysis failed, show error message
+    document.getElementById('resultContent').innerHTML = `
+      <div style="text-align: center; padding: 40px;">
+        <p style="color: #ff6b6b; font-size: 18px; font-weight: 700;">❌ Analysis Failed</p>
+        <p style="color: #6b7280; margin-top: 10px;">Please contact support for a refund.</p>
+        <button class="btn-primary" onclick="goToJobScreen()" style="margin-top: 20px;">Try Again</button>
+      </div>
+    `;
+  } else {
+    // Success - results are already displayed by displayResult() call in runAnalysisAfterPayment()
+    showFeedbackTab();
+  }
 }
+
+// ========================================
+// WHAT THIS FIXES:
+// ========================================
+// ✅ Analysis runs after payment succeeds
+// ✅ Results are displayed to the user
+// ✅ Loading state shows while processing
+// ✅ Error handling if analysis fails
+// ✅ User gets clear feedback at every step
+
+
+async function completePayment() {
+  closePaymentModal();
+  
+  // Show loading state immediately
+  showScreen('resultScreen');
+  document.getElementById('resultContent').innerHTML = `
+    <div style="text-align: center; padding: 40px;">
+      <div class="spinner-big"></div>
+      <p style="color: #6b7280; margin-top: 20px;">Analyzing your offer...</p>
+    </div>
+  `;
+  
+  // Wait for analysis to complete, then show results
+  const success = await runAnalysisAfterPayment();
+  
+  if (!success) {
+    // If analysis failed, show error message
+    document.getElementById('resultContent').innerHTML = `
+      <div style="text-align: center; padding: 40px;">
+        <p style="color: #ff6b6b; font-size: 18px; font-weight: 700;">❌ Analysis Failed</p>
+        <p style="color: #6b7280; margin-top: 10px;">Please contact support for a refund.</p>
+        <button class="btn-primary" onclick="goToJobScreen()" style="margin-top: 20px;">Try Again</button>
+      </div>
+    `;
+  } else {
+    // Success - results are already displayed by displayResult() call in runAnalysisAfterPayment()
+    showFeedbackTab();
+  }
+}
+
 function closePaymentModal() {
   document.getElementById('paymentOverlay').classList.remove('show');
   document.getElementById('paymentModal').classList.remove('show');
