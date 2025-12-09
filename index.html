@@ -1001,9 +1001,17 @@ input::placeholder, textarea::placeholder { color: #9ca3af; }
 </div>
 
         <div class="button-row">
-          <button class="btn-primary" id="analyzeBtn" onclick="analyzeOffer()">Analyze This Offer</button>
-        </div>
-      </div>
+  <button class="btn-primary" id="analyzeBtn" onclick="analyzeOffer()">Analyze This Offer</button>
+</div>
+
+<!-- ADD THIS HERE -->
+<div id="analysisCounter" style="text-align: center; margin-top: 15px; color: #6b7280; font-size: 13px;">
+  <span id="analysesRemaining">5</span> free analyses remaining
+</div>
+<!-- END -->
+
+</div> <!-- closes jobScreen -->
+     
 
       <!-- RESULT SCREEN -->
       <div id="resultScreen" class="hidden">
@@ -1418,10 +1426,10 @@ async function analyzeOffer() {
     return;
   }
 
-  if (analysisCount > 0) {
-    showPaymentModal();
-    return;
-  }
+if (analysisCount >= 5) {
+  showPaymentModal();
+  return;
+}
 
   analysisCount++;
   localStorage.setItem('ScreenJob_analysisCount', analysisCount);
@@ -1502,6 +1510,49 @@ async function analyzeOffer() {
     displayResult(aiAnalysis, salaryData, job, profile);
     showScreen('resultScreen');
     showFeedbackTab();
+
+   decisions.push({ ...aiAnalysis, job, profile, salaryData, timestamp: new Date().toLocaleString() });
+    displayResult(aiAnalysis, salaryData, job, profile);
+    showScreen('resultScreen');
+    showFeedbackTab();
+
+    // ADD THIS HERE
+    // Update counter
+    const remaining = Math.max(0, 5 - analysisCount);
+    const counterEl = document.getElementById('analysesRemaining');
+    const counterContainer = document.getElementById('analysisCounter');
+    
+    if (counterEl) counterEl.textContent = remaining;
+    
+    if (analysisCount >= 4 && counterContainer) {
+      counterContainer.innerHTML = 
+        '<span style="color: #ffb347; font-weight: 600;">⚠️ Last free analysis! Subscribe for unlimited.</span>';
+    }
+    // END
+    
+  } catch (error) {
+    console.error('Analysis error:', error);
+    alert('Error during analysis. Please try again.');
+  }
+```
+
+---
+
+## Visual Guide:
+
+**Before:**
+```
+[Job Input Fields]
+[Analyze This Offer Button]
+</div>
+```
+
+**After:**
+```
+[Job Input Fields]
+[Analyze This Offer Button]
+5 free analyses remaining  ← NEW
+</div>
 
   } catch (error) {
     console.error('Analysis error:', error);
