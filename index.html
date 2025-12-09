@@ -1622,15 +1622,20 @@ function getSalaryData(jobTitle) {
   </div>
 </div>
 
-        <div class="salary-data">
-          <h3>📈 Market Data for ${job.jobTitle}</h3>
-          <p><strong>Your offer:</strong> ${job.baseSalary.toLocaleString()}</p>
-          <p><strong>Market range:</strong> ${salaryData.low.toLocaleString()} - ${salaryData.high.toLocaleString()}</p>
-          <p><strong>Your position:</strong> ${percentile}th percentile (${percentile < 30 ? 'below' : percentile < 70 ? 'at' : 'above'} market)</p>
-          <p style="font-size: 12px; color: #909090; margin-top: 12px;">📊 Data source: ${salaryData.source || 'Industry estimates'}</p>
-          ${job.equity ? `<p><strong>Equity:</strong> ${job.equity}</p>` : ''}
-          ${job.bonus ? `<p><strong>Bonus:</strong> ${job.bonus}</p>` : ''}
-        </div>
+       <div class="salary-data">
+  <h3>📈 Market Data for ${job.jobTitle}</h3>
+  <p><strong>Your offer:</strong> ${job.baseSalary.toLocaleString()}</p>
+  <p><strong>Market range:</strong> ${salaryData.low.toLocaleString()} - ${salaryData.high.toLocaleString()}</p>
+  <p><strong>Your position:</strong> ${percentile}th percentile (${percentile < 30 ? 'below' : percentile < 70 ? 'at' : 'above'} market)</p>
+  <p style="font-size: 12px; color: #909090; margin-top: 12px;">📊 Data source: ${salaryData.source || 'Industry estimates'}</p>
+  ${job.equity ? `<p><strong>Equity:</strong> ${job.equity}</p>` : ''}
+  ${job.bonus ? `<p><strong>Bonus:</strong> ${job.bonus}</p>` : ''}
+  
+  <div style="margin-top: 25px; border-top: 1px solid rgba(59, 130, 246, 0.2); padding-top: 20px;">
+    <h4 style="color: #3b82f6; margin-bottom: 15px;">📊 Real Salary Data</h4>
+    <iframe src="https://www.levels.fyi/charts_embed.html?company=${job.company}&hide_selector=false" height="435" style="width: 100%; border:none;" frameborder="0" scrolling="auto;"></iframe>
+  </div>
+</div>
 
         <div class="pros-cons">
           <h3 style="color: #10b981; margin-bottom: 12px;">✅ Strengths</h3>
