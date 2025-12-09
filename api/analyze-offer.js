@@ -1,125 +1,2136 @@
-// /api/analyze-offer.js - FIXED VERSION
-// Rate limiting - max 10 requests per minute per IP
-const rateLimit = {};
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScreenJob - Job Decision Analyzer</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
 
-export default async function handler(req, res) {
-  // RATE LIMITING CHECK
-  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  const now = Date.now();
-  
-  if (!rateLimit[ip]) {
-    rateLimit[ip] = [];
-  }
-  
-  rateLimit[ip] = rateLimit[ip].filter(time => now - time < 60000);
-  
-  if (rateLimit[ip].length >= 10) {
-    return res.status(429).json({ 
-      error: 'Too many requests. Please wait a minute before trying again.' 
-    });
-  }
-  
-  rateLimit[ip].push(now);
-  // END RATE LIMITING
-  
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-  const { profile, job } = req.body;
-  if (!profile || !job) {
-    return res.status(400).json({ error: 'Missing profile or job data' });
-  }
-  try {
-const prompt = `You are an expert career coach and negotiation strategist. Analyze this job offer comprehensively and provide a logically consistent recommendation.
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MWGBVLDZTW"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-MWGBVLDZTW');
+</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://js.stripe.com/v3/"></script>
+  <style>
+    .payment-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: none; z-index: 999; }
+.payment-overlay.show { display: block; }
 
-CRITICAL - QUALIFICATION CHECK FIRST:
-Before analyzing the offer, check if the candidate meets job requirements:
-1. Flag HARD REQUIREMENTS missing (clearances, licenses, degrees required)
-2. Flag if underqualified on years of experience (>30% gap = major red flag)
-3. Flag if missing critical certifications listed as required
-4. If missing 2+ hard requirements: Recommend PASS or CONDITIONAL, NOT TAKE
-5. Add qualification concerns to "weaknesses" section
+.payment-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); padding: 30px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.4); display: none; z-index: 1000; width: 90%; max-width: 500px; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7); }
+.payment-modal.show { display: block; }
+.payment-modal h3 { color: #3b82f6; font-size: 18px; margin-bottom: 8px; font-weight: 700; }
+.payment-modal p { color: #6b7280; font-size: 13px; margin-bottom: 15px; }
 
-STRENGTHS SECTION RULE - IMPORTANT:
-- If candidate is QUALIFIED (meets 80%+ of requirements): List job offer strengths (salary competitiveness, benefits, growth potential, work-life balance improvements)
-- If candidate is UNQUALIFIED (missing 2+ hard requirements): List ONLY job offer benefits like "Excellent salary: $X/year (Yth percentile)", "Good work-life balance: X hrs/week", "Strong benefits package (health, dental, 401k, housing)"
-- NEVER list candidate background strengths (certs, experience, GPA) in the strengths section if they are unqualified for the role
-- Always be specific with numbers and percentages
+.plan-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.plan-option { background: rgba(59, 130, 246, 0.1); padding: 12px; border-radius: 8px; border: 2px solid rgba(59, 130, 246, 0.3); cursor: pointer; text-align: center; }
+.plan-option.selected { border-color: #3b82f6; background: rgba(59, 130, 246, 0.2); }
+.plan-label { color: #3b82f6; font-weight: 700; font-size: 12px; }
+.plan-price { font-size: 20px; font-weight: 800; color: #10b981; }
+.plan-desc { color: #6b7280; font-size: 11px; }
 
-RECOMMENDATION RULES:
-- TAKE (8-10/10): Meets 80%+ of requirements + aligns with priorities + good salary + minimal downsides
-- NEGOTIATE (5-7/10): Meets requirements BUT missing benefits/terms OR minor qualification gaps that can be overlooked
-- CONDITIONAL (4-7/10): Missing hard requirements BUT company offers sponsorship/training to get them
-- PASS (0-4/10): Missing critical requirements with no sponsorship OR too many fundamental misalignments
+#card-element { padding: 12px; border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(59, 130, 246, 0.05); border-radius: 6px; margin-bottom: 12px; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #ffffff; color: #374151; line-height: 1.6; }
+    
+    .landing { min-height: 100vh; background: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #f0f9ff 100%); display: flex; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; position: relative; overflow: hidden; }
+    .landing::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%); pointer-events: none; }
+    .landing-content { max-width: 900px; color: #fff; position: relative; z-index: 1; }
+    .landing h1 { font-size: 72px; margin-bottom: 20px; font-weight: 900; background: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #64ff9f 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -2px; animation: titleReveal 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s backwards; }
+@keyframes titleReveal { 0% { opacity: 0; transform: translateY(40px); filter: blur(10px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0); } }
+   @keyframes titleReveal { 0% { opacity: 0; transform: translateY(40px); filter: blur(10px); } 100% { opacity: 1; transform: translateY(0); filter: blur(0); } }
 
-USER PROFILE:
-- Current: ${profile.currentJobTitle}, ${profile.currentSalary}/year, ${profile.currentHours}h/week
-- Experience: ${profile.yearsExp} years
-- Company size: ${profile.currentCompanySize}
-- Priorities (1-5): Salary=${profile.priority_salary}, Balance=${profile.priority_balance}, Growth=${profile.priority_growth}, Stability=${profile.priority_stability}, Remote=${profile.priority_remote}, Brand=${profile.priority_brand}
-${profile.resumeData ? `- Background: ${profile.resumeData}` : ''}
-${profile.achievements ? `- Professional Achievements: ${profile.achievements}` : ''}
 
-JOB REQUIREMENTS & QUALIFICATIONS:
-${job.requirements ? `Required/Preferred: ${job.requirements}` : 'No requirements listed'}
-Your Background: ${profile.yearsExp} years experience | Certifications: ${profile.extractedData?.certifications?.slice(0, 3).join(', ') || 'None listed'} | Key Skills: ${profile.extractedData?.skills?.slice(0, 5).join(', ') || 'None listed'}
+.landing .tagline { font-size: 28px; margin-bottom: 15px; font-weight: 700; color: #374151; animation: slideInLeft 0.8s ease-out 0.3s backwards; }
+@keyframes slideInLeft { 0% { opacity: 0; transform: translateX(-30px); } 100% { opacity: 1; transform: translateX(0); } }
+.landing .subtitle { font-size: 18px; margin-bottom: 40px; color: #64748b; line-height: 1.8; animation: fadeInUp 0.8s ease-out 0.4s backwards; }
+@keyframes fadeInUp { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+.cta-button { display: inline-block; padding: 16px 48px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; font-size: 18px; font-weight: 700; border: none; border-radius: 12px; cursor: pointer; transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3); position: relative; overflow: hidden; animation: buttonPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s backwards; }
+@keyframes buttonPop { 0% { opacity: 0; scale: 0.8; } 100% { opacity: 1; scale: 1; } }
+.cta-button::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); transition: left 0.5s ease; }
+.cta-button:hover::before { left: 100%; }
+.cta-button:hover { transform: translateY(-5px) scale(1.03); box-shadow: 0 25px 70px rgba(59, 130, 246, 0.7); }
+.cta-button:active { transform: translateY(-1px) scale(0.97); box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4); }
+    .social-proof { margin-top: 50px; padding: 25px; background: rgba(59, 130, 246, 0.08); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2); }
+    .social-proof p { margin: 10px 0; font-size: 15px; color: #4b5563; }
+    
+    .how-it-works { margin-top: 100px; padding-top: 80px; border-top: 1px solid rgba(59, 130, 246, 0.2); }
+    .how-it-works h2 { font-size: 42px; margin-bottom: 50px; font-weight: 800; background: linear-gradient(135deg, #3b82f6 0%, #64ff9f 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; }
+    .step { background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%); padding: 35px; border-radius: 16px; text-align: left; border: 1px solid rgba(59, 130, 246, 0.2); transition: all 0.3s; }
+    .step:hover { transform: translateY(-5px); border-color: rgba(59, 130, 246, 0.4); background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%); }
+    .step-number { display: inline-flex; width: 50px; height: 50px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; font-weight: 800; border-radius: 50%; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 22px; }
+    .step h3 { font-size: 22px; margin-bottom: 12px; font-weight: 700; color: #3b82f6; }
+    .step p { color: #6b7280; }
+    
+    .pain-points { margin-top: 100px; padding: 50px 40px; background: linear-gradient(135deg, rgba(233, 69, 96, 0.08) 0%, rgba(255, 107, 107, 0.08) 100%); border-radius: 16px; text-align: left; border: 1px solid rgba(233, 69, 96, 0.2); }
+    .pain-points h2 { font-size: 36px; margin-bottom: 30px; color: #ff6b6b; font-weight: 800; }
+    .pain-points p { margin-bottom: 20px; color: #4b5563; }
+    
+    .final-cta { margin-top: 100px; padding: 60px 40px; background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%); border-radius: 16px; text-align: center; border: 2px solid rgba(59, 130, 246, 0.3); }
+    .final-cta h2 { font-size: 40px; margin-bottom: 15px; background: linear-gradient(135deg, #3b82f6 0%, #64ff9f 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 800; }
+    .final-cta p { color: #64748b; margin-bottom: 30px; }
 
-JOB OFFER:
-- Title: ${job.jobTitle} @ ${job.company}
-- Salary: ${job.baseSalary}/year (vs current ${profile.currentSalary})
-- Equity: ${job.equity || 'None mentioned'}
-- Bonus: ${job.bonus || 'None mentioned'}
-- Hours: ${job.hoursPerWeek}h/week (vs current ${profile.currentHours})
-- Setup: ${job.workEnv}
-- Stage: ${job.fundingStage}
-- Team: ${job.teamSize} people
-- Industry: ${job.industry}
-- Concerns: ${job.concerns || 'None'}
+    .email-signup { background: rgba(59, 130, 246, 0.1); padding: 20px; border-radius: 12px; margin: 20px 0; border: 1px solid rgba(59, 130, 246, 0.2); }
+    .email-signup h3 { color: #3b82f6; font-size: 16px; margin-bottom: 12px; font-weight: 700; }
+    .email-signup input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(59, 130, 246, 0.05); color: #374151; font-size: 14px; }
+    .email-signup input::placeholder { color: #9ca3af; }
+    .email-signup input:focus { outline: none; border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+    .email-signup button { width: 100%; }
+    .email-signup-status { font-size: 12px; margin-top: 8px; color: #10b981; text-align: center; }
+    .email-signup-status.error { color: #ff6b6b; }
+    
+    .app-container { display: none; min-height: 100vh; background: #ffffff; padding: 20px; }
+    .app-container.show { display: block; }
+    .app-content { max-width: 900px; margin: 0 auto; background: #f8fafc; border-radius: 16px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); padding: 40px; border: 1px solid rgba(59, 130, 246, 0.2); }
+    .app-header { display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid rgba(59, 130, 246, 0.2); }
+    .back-button { position: absolute; left: 0; background: none; border: none; font-size: 28px; cursor: pointer; color: #3b82f6; padding: 0; transition: 0.3s; }
+    .back-button:hover { transform: scale(1.1); }
+    .app-header h1 { font-size: 28px; margin: 0; background: linear-gradient(135deg, #3b82f6 0%, #64ff9f 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    
+    h1 { font-size: 32px; color: #374151; margin-bottom: 8px; }
+    .subtitle { color: #6b7280; margin-bottom: 30px; font-size: 14px; }
+    .section { margin-bottom: 30px; }
+    .section h2 { font-size: 18px; color: #3b82f6; margin-bottom: 15px; font-weight: 700; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-size: 14px; font-weight: 600; color: #4b5563; margin-bottom: 8px; }
+input, select, textarea { width: 100%; padding: 12px; border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(59, 130, 246, 0.05); border-radius: 8px; font-size: 14px; font-family: inherit; color: #374151; transition: all 0.3s; }
+input::placeholder, textarea::placeholder { color: #9ca3af; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+    select option { background: #ffffff; color: #000000; }
+    
+    .slider-container { display: flex; align-items: center; gap: 15px; }
+    input[type="range"] { flex: 1; cursor: pointer; accent-color: #3b82f6; }
+    .slider-value { min-width: 40px; text-align: center; font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 4px 8px; border-radius: 6px; }
+    
+    .button-row { display: flex; gap: 10px; margin-top: 30px; flex-wrap: wrap; }
+    button { flex: 1; min-width: 150px; padding: 13px 24px; font-size: 16px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: all 0.3s; font-family: inherit; }
+    .btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; }
+    .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3); }
+    .btn-secondary { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .btn-secondary:hover:not(:disabled) { background: rgba(59, 130, 246, 0.2); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    
+    .resume-status { background: rgba(16, 185, 129, 0.1); padding: 12px; border-radius: 8px; border: 1px solid rgba(100, 255, 159, 0.3); margin-bottom: 15px; font-size: 13px; color: #10b981; }
+    .resume-status.empty { background: rgba(255, 107, 107, 0.1); border-color: rgba(255, 107, 107, 0.3); color: #ff6b6b; }
+    
+    .file-input-label { display: block; padding: 20px; border: 2px dashed rgba(59, 130, 246, 0.3); border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s; background: rgba(59, 130, 246, 0.05); }
+    .file-input-label:hover { border-color: rgba(59, 130, 246, 0.6); background: rgba(59, 130, 246, 0.1); }
+    .file-input-label input[type="file"] { display: none; }
+    
+    .recommendation { font-size: 48px; font-weight: 800; margin: 20px 0; padding: 25px; border-radius: 12px; text-align: center; }
+    .recommendation.take { background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%); color: #10b981; border: 1px solid rgba(100, 255, 159, 0.3); }
+    .recommendation.pass { background: linear-gradient(135deg, rgba(255, 107, 107, 0.15) 0%, rgba(255, 107, 107, 0.05) 100%); color: #ff6b6b; border: 1px solid rgba(255, 107, 107, 0.3); }
+    .recommendation.negotiate { background: linear-gradient(135deg, rgba(255, 179, 71, 0.15) 0%, rgba(255, 179, 71, 0.05) 100%); color: #ffb347; border: 1px solid rgba(255, 179, 71, 0.3); }
+    
+    .score { font-size: 24px; font-weight: 700; color: #3b82f6; margin: 15px 0; text-align: center; }
+    .explanation { font-size: 16px; color: #6b7280; margin: 15px 0; line-height: 1.8; }
+    
+    .breakdown-item { background: rgba(59, 130, 246, 0.05); padding: 15px; margin-bottom: 12px; border-left: 4px solid #3b82f6; border-radius: 6px; }
+    .breakdown-key { font-weight: 700; color: #10b981; text-transform: capitalize; }
+    .breakdown-value { color: #64748b; margin-top: 5px; font-size: 14px; }
+    
+    .ai-insight { background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%); padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .ai-insight h3 { font-size: 15px; font-weight: 700; margin-bottom: 12px; color: #3b82f6; }
+    .ai-insight p { font-size: 14px; color: #64748b; margin: 8px 0; line-height: 1.6; }
+    
+    .salary-data { background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%); padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .salary-data h3 { font-size: 15px; font-weight: 700; margin-bottom: 12px; color: #3b82f6; }
+    .salary-data p { font-size: 14px; color: #64748b; margin: 6px 0; }
+    
+    .email-capture { background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%); padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .email-capture p { color: #6b7280; margin-bottom: 12px; font-size: 14px; }
+    .email-input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+    .email-input-row input { flex: 1; }
+    .email-input-row button { flex: 0.3; min-width: 80px; }
+    .email-status { font-size: 12px; margin-top: 8px; color: #10b981; }
+    .email-status.error { color: #ff6b6b; }
+    
+    .history-item { background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%); padding: 18px; margin-bottom: 12px; border-left: 4px solid #2563eb; border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.2); }
+    .history-rec { font-weight: 700; font-size: 16px; color: #3b82f6; }
+    .history-date { font-size: 12px; color: #707080; margin-top: 8px; }
+    
+    .pros-cons { background: rgba(59, 130, 246, 0.05); padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid rgba(59, 130, 246, 0.2); }
+    .pros-cons h3 { color: #10b981; margin-bottom: 10px; font-size: 16px; }
+    .pro-item { color: #10b981; margin: 8px 0; padding-left: 20px; }
+    .pro-item::before { content: '✓ '; font-weight: bold; }
+    .con-item { color: #cc0000; margin: 8px 0; padding-left: 20px; }
+    .con-item::before { content: '✗ '; font-weight: bold; }
+    
+    .comparison { background: rgba(59, 130, 246, 0.05); padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid rgba(59, 130, 246, 0.2); }
+    .comparison-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 12px; align-items: center; }
+    .comparison-label { color: #6b7280; font-weight: 600; }
+    .comparison-current { color: #4b5563; }
+    .comparison-new { color: #3b82f6; font-weight: 700; }
 
-IMPORTANT: Match recommendation to score. Only use NEGOTIATE if 5-7/10. If score is 3/10, must be PASS. If 8+, must be TAKE.
+    .feedback-tab { position: fixed; bottom: 30px; right: 30px; z-index: 100; cursor: pointer; display: none; }
+    .feedback-tab.show { display: block; }
+    .feedback-tab-content { display: flex; align-items: center; gap: 10px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; padding: 12px 18px; border-radius: 50px; box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3); transition: all 0.3s; font-weight: 700; font-size: 14px; }
+    .feedback-tab:hover .feedback-tab-content { transform: scale(1.05); box-shadow: 0 12px 35px rgba(59, 130, 246, 0.5); }
+    .feedback-tab-icon { font-size: 18px; animation: float 2s ease-in-out infinite; }
+    @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
 
-Provide ONLY valid JSON (no markdown, no extra text):
-{
-  "recommendation": "TAKE|PASS|NEGOTIATE|CONDITIONAL",
-  "score": 0-10,
-  "confidence": 0-100,
-  "scoringBreakdown": {
-    "salary": "explanation with percentage change and market position",
-    "workLife": "explanation of hours and balance impact",
-    "growth": "explanation of learning/career progression opportunity",
-    "stability": "explanation based on company stage",
-    "remote": "explanation of work setup vs preference",
-    "brand": "explanation of company prestige impact",
-    "qualifications": "analysis of whether candidate meets job requirements"
-  },
-  "strengths": ["If qualified: job benefits/opportunity strengths. If unqualified: ONLY list offer benefits with numbers like salary percentile, hours, benefits package"],
-  "weaknesses": ["List ALL qualification gaps, missing hard requirements, and career misalignments. Be specific about what's missing."],
-  "negotiableItems": ["item1 - specific thing to push for", "item2"],
-  "careerImpact": "2-3 sentences on career trajectory impact",
-  "reasoning": "2-3 sentences - WHY this recommendation at this score",
-  "riskFactors": "key risks if you take this",
-  "questions": ["question1 to ask?", "question2 to ask?"]
-}`;
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": process.env.GEMINI_API_KEY
-      },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      })
-    });
-    if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status}`);
+    .feedback-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: none; z-index: 999; animation: fadeIn 0.3s ease-out; }
+    .feedback-overlay.show { display: block; }
+    
+    .feedback-modal { position: fixed; top: 20%; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); padding: 30px; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.4); display: none; z-index: 1000; width: 90%; max-width: 420px; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7); }
+    .feedback-modal.show { display: block; animation: slideIn 0.3s ease-out; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .feedback-modal h3 { color: #3b82f6; font-size: 18px; margin-bottom: 12px; font-weight: 700; }
+    .feedback-modal p { color: #6b7280; font-size: 13px; margin-bottom: 15px; }
+    .feedback-modal select, .feedback-modal textarea { width: 100%; padding: 10px; border: 1px solid rgba(59, 130, 246, 0.3); background: rgba(59, 130, 246, 0.05); border-radius: 6px; color: #374151; margin-bottom: 12px; font-family: inherit; font-size: 13px; }
+    .feedback-modal select:focus, .feedback-modal textarea:focus { outline: none; border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+    .feedback-modal textarea { resize: vertical; min-height: 60px; }
+    .feedback-button-row { display: flex; gap: 10px; }
+    .feedback-button-row button { flex: 1; padding: 10px; font-size: 13px; min-width: auto; }
+    .feedback-modal .btn-skip { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .feedback-modal .btn-skip:hover { background: rgba(59, 130, 246, 0.15); }
+    
+    .hidden { display: none; }
+    
+/* LOADING SPINNER */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(59, 130, 246, 0.3);
+      border-top: 2px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
     }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 768px) {      .landing h1 { font-size: 48px; }
+      .landing .tagline { font-size: 22px; }
+      .steps { grid-template-columns: 1fr; }
+      .app-content { padding: 25px; max-width: 100%; }
+      .comparison-row { grid-template-columns: 1fr; }
+      button { min-width: 120px; }
+      .feedback-modal { width: 95%; max-width: 100%; top: 35%; }
+    }
+
+    /* TESTIMONIALS SECTION */
+.testimonials-section {
+  margin-top: 120px;
+  padding: 80px 40px;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+  border-radius: 24px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.testimonials-section h2 {
+  font-size: 42px;
+  margin-bottom: 60px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #3b82f6 0%, #64ff9f 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.testimonial-card {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%);
+  padding: 30px;
+  border-radius: 16px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(16, 185, 129, 0.12) 100%);
+  box-shadow: 0 20px 50px rgba(59, 130, 246, 0.15);
+}
+
+.stars {
+  color: #ffb347;
+  font-size: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 4px;
+}
+
+.testimonial-text {
+  color: #4b5563;
+  font-size: 15px;
+  line-height: 1.7;
+  margin-bottom: 20px;
+  font-style: italic;
+}
+
+.testimonial-author {
+  color: #3b82f6;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.testimonial-role {
+  color: #909090;
+  font-size: 13px;
+}
+
+.story-section {
+  margin-top: 100px;
+  padding: 80px 40px;
+  background: #ffffff;
+  border-radius: 24px;
+  border: none;
+}
+
+.story-section h2 {
+  font-size: 42px;
+  margin-bottom: 40px;
+  font-weight: 800;
+  color: #ff6b6b;
+}
+
+.story-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+
+.story-content p {
+  font-size: 16px;
+  color: #64748b;
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.story-highlight {
+  background: rgba(59, 130, 246, 0.2);
+  border-left: 4px solid #3b82f6;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+  color: #1e40af;
+  font-weight: 700;
+}
+
+.story-visual {
+  position: relative;
+  height: 400px;
+}
+
+.story-stat {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(16, 185, 129, 0.15) 100%);
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.story-stat:hover {
+  transform: translateX(8px);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.stat-number {
+  font-size: 28px;
+  font-weight: 800;
+  color: #3b82f6;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  color: #6b7280;
+  font-size: 14px;
+}
+  /* EXTRACTED DATA TAGS */
+.extracted-section {
+  margin-bottom: 25px;
+  display: none;
+}
+
+.extracted-section.show {
+  display: block;
+}
+
+.extracted-section h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #3b82f6;
+  margin-bottom: 12px;
+}
+
+/* IMPROVED TAGS – compact, responsive, good-looking */
+/* PERFECT SKILL TAGS — compact, wrap beautifully, never too wide */
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1.5px solid #3b82f6;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e40af;
+  white-space: nowrap;
+  transition: all 0.2s;
+  height: auto;
+  line-height: 1;
+}
+
+.tag span {
+  display: inline;
+}
+
+.tag:hover {
+  background: rgba(0, 212, 255, 0.1);
+  border-color: #64fff5;
+}
+
+.tag-remove {
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  font-size: 14px;
+  padding: 0 !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  flex: none !important;
+  min-width: auto !important;
+  min-height: auto !important;
+}
+
+.tag-remove:hover {
+  color: #ff3333;
+}
+.add-tag-input {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.add-tag-input input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.05);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.add-tag-input input::placeholder {
+  color: #9ca3af;
+}
+
+.add-tag-input input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.add-tag-input button {
+  padding: 10px 16px;
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.add-tag-input button:hover {
+  background: rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+    
+/* PROGRESS BAR */
+.analysis-progress {
+  width: 100%;
+  height: 4px;
+  background: rgba(59, 130, 246, 0.2);
+  border-radius: 2px;
+  margin-bottom: 15px;
+  overflow: hidden;
+}
+
+.analysis-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6 0%, #64ff9f 100%);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+.spinner-big {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(59, 130, 246, 0.3);
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 12px;
+  vertical-align: middle;
+}
+    
+@media (max-width: 768px) {
+  .story-grid { grid-template-columns: 1fr; }
+  .testimonials-grid { grid-template-columns: 1fr; }
+}
+  </style>
+</head>
+<body>
+  <!-- PAYMENT MODAL -->
+<div id="paymentOverlay" class="payment-overlay"></div>
+<div id="paymentModal" class="payment-modal">
+  <h3>💳 Unlock Full Analysis</h3>
+  <p>Get detailed recommendations, negotiation strategies & market insights.</p>
+  
+  <div style="background: rgba(59, 130, 246, 0.1); padding: 12px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; justify-content: center; border: 1px solid rgba(59, 130, 246, 0.2);">
+    <span style="font-size: 16px;">🔒</span>
+    <span style="color: #6b7280; font-size: 12px;">Secure payment with Stripe • Your data is encrypted</span>
+  </div>
+  
+  <div class="plan-options">
+    <div class="plan-option selected" id="payOption1" onclick="selectPayOption('once')">
+      <p class="plan-label">ONE-TIME</p>
+      <p class="plan-price">$2.99</p>
+      <p class="plan-desc">This analysis only</p>
+    </div>
+    <div class="plan-option" id="payOption2" onclick="selectPayOption('monthly')">
+      <p class="plan-label">MONTHLY ⭐</p>
+      <p class="plan-price">$9.99</p>
+      <p class="plan-desc">Unlimited analyses</p>
+    </div>
+  </div>
+
+  <form id="paymentForm">
+    <div id="card-element"></div>
+    <div id="card-errors" style="color: #ff6b6b; margin-bottom: 15px;"></div>
+    <button type="submit" class="btn-primary" id="submitPayment">Pay $2.99</button>
+    <button type="button" class="btn-secondary" onclick="closePaymentModal()" style="margin-left: 10px;">Cancel</button>
+  </form>
+
+  <div id="paymentSuccess" style="display: none; text-align: center;">
+    <p style="font-size: 48px; margin-bottom: 15px;">✅</p>
+    <p style="color: #10b981; font-weight: 700; margin-bottom: 10px;">Payment successful!</p>
+    <button type="button" class="btn-primary" onclick="completePayment()" style="width: 100%;">View Analysis</button>
+  </div>
+</div>
+  <!-- FEEDBACK TAB -->
+  <div id="feedbackTab" class="feedback-tab">
+    <div class="feedback-tab-content">
+      <span class="feedback-tab-icon">💬</span>
+      <span>Quick Feedback?</span>
+    </div>
+  </div>
+
+  <!-- FEEDBACK MODAL -->
+  <div id="feedbackOverlay" class="feedback-overlay"></div>
+  <div id="feedbackModal" class="feedback-modal">
+    <h3>💬 Quick Feedback</h3>
+    <p>Was this analysis helpful?</p>
+    <div class="form-group">
+      <select id="feedbackScore">
+        <option value="">Rate this (1-5)</option>
+        <option value="5">5 - Very helpful</option>
+        <option value="4">4 - Helpful</option>
+        <option value="3">3 - Okay</option>
+        <option value="2">2 - Not very helpful</option>
+        <option value="1">1 - Not helpful</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <textarea id="feedbackText" placeholder="What could we improve? (optional)"></textarea>
+    </div>
+    <div class="feedback-button-row">
+      <button class="btn-primary" onclick="submitFeedback()">📤 Send</button>
+      <button class="btn-skip" onclick="skipFeedback()">Skip</button>
+    </div>
+  </div>
+<!-- LANDING PAGE -->
+  <div id="landingPage" class="landing">
+    <div class="landing-content">
+      <h1>ScreenJob</h1>
+      <p class="tagline">Find the right job before you apply.</p>
+      <p class="subtitle">AI-powered screening based on YOUR background and priorities. <strong>Skip the wrong jobs. Apply to the right ones.</strong></p>
+  <button class="cta-button" onclick="startApp()">Screen Job Postings →</button>
+      <div class="social-proof">
+        <p><strong>⭐ 4.9/5</strong> from early users</p>
+        <p>"AI actually understood my career trajectory and gave real negotiation advice" - Test User</p>
+        <div class="email-signup">
+  <h3>📧 Want updates on new features?</h3>
+  <input type="email" id="emailSignup" placeholder="your@email.com">
+  <button onclick="signupEmail()" class="btn-secondary">Join 200+ early users</button>
+  <div id="signupStatus" class="email-signup-status"></div>
+</div>
+      </div>
+
+<!-- TESTIMONIALS SECTION -->
+<div class="testimonials-section">
+  <h2>💬 What People Are Saying</h2>
+  <div class="testimonials-grid">
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"Saved me hours of wasted applications. Screened 50 job postings and found out only 8 were actually worth my time. Game changer."</p>
+      <div class="testimonial-author">Alex Johnson</div>
+      <div class="testimonial-role">Data Scientist, Boston</div>
+    </div>
+    
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"Finally, I'm not applying to jobs that sound good but don't fit my priorities. Applied to 3 jobs ScreenJob recommended, got 2 interviews."</p>
+      <div class="testimonial-author">Emma Williams</div>
+      <div class="testimonial-role">Product Manager, SF</div>
+    </div>
+    
+    <div class="testimonial-card">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"This filtered out red flags I would've missed. Found out one 'dream job' was actually terrible for work-life balance. Dodged a bullet."</p>
+      <div class="testimonial-author">David Chen</div>
+      <div class="testimonial-role">Senior Engineer, NYC</div>
+    </div>
+  </div>
+</div>
+
+<!-- CAREER DECISION STORY -->
+<div class="story-section">
+  <h2>📖 Why This Matters</h2>
+  <div class="story-grid">
+    <div class="story-content">
+      <p>You're job hunting. LinkedIn shows you 100 postings that look "perfect." You start applying—to all of them.</p>
+      
+      <p><strong>But do they actually fit YOU?</strong> You have no idea. You're guessing. Does the salary match the market? Will there actually be growth? Is the company stable? Remote-friendly? You literally can't tell from the posting.</p>
+      
+      <p><strong>So you apply everywhere.</strong> And waste time on interviews for jobs that were never right for you. You get offers from companies where you'd be miserable. Meanwhile, the GOOD jobs? You skipped those because you didn't understand what made them special.</p>
+      
+      <div class="story-highlight">
+        The average person spends 30+ hours applying to jobs that don't fit them. Most never get past the first interview. What if you could know BEFORE you apply?
+      </div>
+      
+      <p>This is the ScreenJob difference. <strong>We analyze each job posting against YOUR background, priorities, and goals.</strong> We tell you which jobs are actually worth your time. Which ones align with your career arc. Which ones pay fairly. Which ones have red flags.</p>
+    </div>
+    
+   <div class="story-visual">
+  <div class="story-stat">
+    <div class="stat-number">10K+</div>
+    <div class="stat-label">Jobs screened by users</div>
+  </div>
+  
+  <div class="story-stat">
+    <div class="stat-number">85%</div>
+    <div class="stat-label">Fewer wasted applications</div>
+  </div>
+  
+  <div class="story-stat">
+    <div class="stat-number">2x</div>
+    <div class="stat-label">More interviews from quality jobs</div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div class="how-it-works">
+        <h2>How It Works</h2>
+        <div class="steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <h3>Your Background</h3>
+            <p>Upload your resume or tell us your background. AI learns your career arc.</p>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <h3>Paste Job Posting</h3>
+            <p>Paste any job posting from LinkedIn, Indeed, or email. AI extracts everything.</p>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <h3>Get AI Analysis</h3>
+            <p>Detailed recommendation + career alignment insights.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="pain-points">
+        <h2>Why People Make Bad Job Decisions</h2>
+        <p><strong>❌ No Context:</strong> You don't compare to your career growth trajectory.</p>
+        <p><strong>❌ No Strategy:</strong> You apply to everything without filtering.</p>
+        <p><strong>❌ No Data:</strong> You guess at market rates and job fit instead of knowing.</p>
+      </div>
+
+   
+
+      <div class="final-cta">
+        <h2>Screen smarter. Apply better.</h2>
+        <p>Find out if a job fits YOU before wasting time applying.</p>
+        <button class="cta-button" onclick="startApp()" style="padding: 18px 56px; font-size: 18px;">Start Now</button>
+      </div>
+
+      <footer style="margin-top: 80px; padding-top: 30px; border-top: 1px solid rgba(59, 130, 246, 0.2); text-align: center;">
+        <p style="color: #707080; font-size: 14px; margin-bottom: 15px;">
+          <a href="privacy.html" style="color: #3b82f6; text-decoration: none; margin: 0 15px; transition: 0.3s;" onmouseover="this.style.color='#64ff9f'" onmouseout="this.style.color='#3b82f6'">Privacy Policy</a>
+          <span style="color: #707080;">|</span>
+          <a href="terms.html" style="color: #3b82f6; text-decoration: none; margin: 0 15px; transition: 0.3s;" onmouseover="this.style.color='#64ff9f'" onmouseout="this.style.color='#3b82f6'">Terms of Service</a>
+          <span style="color: #707080;">|</span>
+          <a href="/contact.html" style="color: #3b82f6; text-decoration: none; margin: 0 15px; transition: 0.3s;" onmouseover="this.style.color='#64ff9f'" onmouseout="this.style.color='#3b82f6'">Contact</a>
+        </p>
+        <p style="color: #9ca3af; font-size: 13px;">&copy; 2024 ScreenJob. All rights reserved.</p>
+      </footer>
+    </div>
+  </div>
+  <!-- APP -->
+  <!-- APP -->
+  <div id="appContainer" class="app-container">
+    <div class="app-content">
+      <!-- PROFILE SCREEN -->
+      <div id="profileScreen">
+        <div class="app-header">
+          <button class="back-button" onclick="goToLanding()">←</button>
+          <h1>Your Background</h1>
+        </div>
+        <p class="subtitle">Upload your resume or tell us about your career</p>
+        
+        <div class="section">
+          <h2>Resume <span style="color: #ff6b6b;">*</span></h2>
+          <div id="resumeStatus" class="resume-status empty">📄 No resume uploaded yet</div>
+          <label class="file-input-label">
+            📤 Upload Resume (PDF or TXT)
+            <input type="file" id="resumeFile" accept=".pdf,.txt" onchange="handleResumeUpload(event)" required>
+          </label>
+          <button class="btn-secondary" id="extractResumeBtn" onclick="extractResumeData()" style="width: 100%; margin-top: 10px; display: none;">🤖 Extract from Resume</button>
+        </div>
+
+        <div class="section">
+  <h2>Current Role</h2>
+  <div class="form-group">
+    <label>Current Company</label>
+    <input type="text" id="currentCompany">
+  </div>
+  <div class="form-group">
+    <label>Current Job Title</label>
+    <input type="text" id="currentJobTitle" >
+  </div>
+  <div class="form-group">
+    <label>Current Salary ($)</label>
+    <input type="number" id="currentSalary">
+  </div>
+  <div class="form-group">
+    <label>Current Hours Per Week</label>
+    <input type="number" id="currentHours">
+  </div>
+  <div class="form-group">
+    <label>Years of Experience</label>
+    <input type="number" id="yearsExp" min="0">
+  </div>
+
+          <div class="form-group">
+            <label>Current Company Size</label>
+            <select id="currentCompanySize">
+              <option value="startup">Startup (1-50)</option>
+              <option value="small">Small (50-500)</option>
+              <option value="mid">Mid (500-5000)</option>
+              <option value="large">Large (5000+)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>What Matters Most? (1-5 scale)</h2>
+          
+          <div class="form-group">
+            <label>💰 Salary & Compensation</label>
+            <div class="slider-container">
+              <input type="range" id="prioritySalary" min="1" max="5" value="3">
+              <span class="slider-value" id="salaryValue">3</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>⚖️ Work-Life Balance</label>
+            <div class="slider-container">
+              <input type="range" id="priorityBalance" min="1" max="5" value="4">
+              <span class="slider-value" id="balanceValue">4</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>📈 Career Growth & Learning</label>
+            <div class="slider-container">
+              <input type="range" id="priorityGrowth" min="1" max="5" value="3">
+              <span class="slider-value" id="growthValue">3</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>🛡️ Job Stability & Security</label>
+            <div class="slider-container">
+              <input type="range" id="priorityStability" min="1" max="5" value="4">
+              <span class="slider-value" id="stabilityValue">4</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>🏠 Remote Work Flexibility</label>
+            <div class="slider-container">
+              <input type="range" id="priorityRemote" min="1" max="5" value="3">
+              <span class="slider-value" id="remoteValue">3</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>🎯 Brand & Company Prestige</label>
+            <div class="slider-container">
+              <input type="range" id="priorityBrand" min="1" max="5" value="2">
+              <span class="slider-value" id="brandValue">2</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>Work Preferences</h2>
+          
+          <div class="form-group">
+            <label>Preferred Work Schedule</label>
+            <select id="workSchedule">
+              <option value="">Select your preference</option>
+              <option value="morning">Morning Shift (Early start)</option>
+              <option value="standard">Standard 9-5</option>
+              <option value="flexible">Flexible Hours</option>
+              <option value="evening">Evening Shift</option>
+              <option value="no-preference">No Preference</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Overtime & On-Call Tolerance</label>
+            <select id="overtimePreference">
+              <option value="">Select your preference</option>
+              <option value="no-overtime">No overtime or on-call</option>
+              <option value="occasional">Occasional only (rare)</option>
+              <option value="moderate">Moderate (expected sometimes)</option>
+              <option value="flexible">Flexible/As needed</option>
+              <option value="no-preference">No Preference</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Travel Requirements</label>
+            <select id="travelPreference">
+              <option value="">Select your preference</option>
+              <option value="no-travel">No travel required</option>
+              <option value="minimal">Minimal (1-2x/month)</option>
+              <option value="moderate">Moderate (monthly)</option>
+              <option value="frequent">Frequent (weekly)</option>
+              <option value="no-preference">No Preference</option>
+            </select>
+          </div>
+        </div>
+
+      
+
+ 
+
+       <!-- EXTRACTED DATA SECTIONS -->
+<div class="section" id="extractedSkillsSection" class="extracted-section">
+  <h3>📌 Skills</h3>
+  <div id="skillsTagsContainer" class="tags-container"></div>
+  <div class="add-tag-input">
+    <input type="text" id="addSkillInput" placeholder="Add another skill...">
+    <button onclick="addSkill()">Add</button>
+  </div>
+</div>
+
+<div class="section" id="extractedCertsSection" class="extracted-section">
+  <h3>🎓 Certifications</h3>
+  <div id="certsTagsContainer" class="tags-container"></div>
+  <div class="add-tag-input">
+    <input type="text" id="addCertInput" placeholder="Add another cert...">
+    <button onclick="addCert()">Add</button>
+  </div>
+</div>
+
+
+
+<div class="section">
+  <h2>Professional Achievements (Optional)</h2>
+  <p style="color: #6b7280; font-size: 13px; margin-bottom: 12px;">
+    Awards, recognitions, memberships, publications, speaking engagements, projects, etc.
+  </p>
+  <div class="form-group">
+    <textarea id="achievements" 
+              placeholder="e.g., Won sales award 2 years in a row, Board member of local nonprofit, Published in industry journal, Speaker at 4 conferences, Led merger integration, Increased team productivity by 40%..."
+              style="height: 80px; resize: vertical;"></textarea>
+  </div>
+</div>
+        
+        <div class="section">
+          <h2>Additional Notes</h2>
+          <div class="form-group">
+            <label>Anything else that matters? (Optional)</label>
+            <textarea id="additionalNotes" placeholder="e.g., Company culture important to me, want mentorship opportunities, need good health insurance, prefer startup environment, family-friendly policies, etc..." style="height: 100px; resize: vertical;"></textarea>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button class="btn-primary" onclick="goToJobScreen()">Next: Enter Job Posting</button>
+          <button class="btn-secondary" onclick="showHistory()">View History</button>
+        </div>
+      </div>
+
+      <!-- JOB SCREEN -->
+      <div id="jobScreen" class="hidden">
+        <div class="app-header">
+          <button class="back-button" onclick="goToProfileScreen()">←</button>
+          <h1>Job Offer Details</h1>
+        </div>
+
+
+
+       
+       <div class="section" style="background: rgba(16, 185, 129, 0.05); padding: 15px; border-radius: 8px; border: 1px solid rgba(100, 255, 159, 0.2); margin-bottom: 20px;">
+  <p style="color: #10b981; font-size: 13px; margin-bottom: 10px;"><strong>💡 Quick Fill:</strong> Paste a job posting and AI will extract everything</p>
+  <div class="form-group">
+    <textarea id="jobPostingPaste" placeholder="Paste the full job posting here (LinkedIn, Indeed, email offer, etc.)" style="height: 120px; resize: vertical;"></textarea>
+  </div>
+  <button class="btn-secondary" onclick="extractJobData()" style="width: 100%;">🤖 Auto-Fill from Posting</button>
+</div>
+
+       
+
+        <div style="text-align: center; color: #707080; margin: 20px 0; font-size: 13px;">— OR ENTER MANUALLY —</div>
+        
+        <div class="section">
+          <div class="form-group">
+            <label>Job Title</label>
+            <input type="text" id="jobTitle">
+          </div>
+
+          <div class="form-group">
+            <label>Company Name</label>
+            <input type="text" id="company">
+          </div>
+
+          <div class="form-group">
+            <label>Base Salary ($)</label>
+            <input type="number" id="baseSalary">
+          </div>
+
+          <div class="form-group">
+            <label>Equity/Stock Options (% or value)</label>
+            <input type="text" id="equity">
+          </div>
+
+          <div class="form-group">
+            <label>Bonus (% or $)</label>
+            <input type="text" id="bonus">
+          </div>
+
+          <div class="form-group">
+            <label>Hours Per Week</label>
+            <input type="number" id="hoursPerWeek">
+          </div>
+
+          <div class="form-group">
+            <label>Company Stage</label>
+            <select id="fundingStage">
+  <option value="">Select funding stage</option>
+  <option value="seed">Seed Startup (Very High Risk)</option>
+  <option value="series-a">Series A (High Risk)</option>
+  <option value="series-b">Series B-C (Moderate Risk)</option>
+  <option value="growth">Growth Stage (Stable)</option>
+              <option value="public">Public Company (Very Safe)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Team Size</label>
+<input type="number" id="teamSize" min="1">          </div>
+
+          <div class="form-group">
+            <label>Work Environment</label>
+            <select id="workEnv">
+  <option value="">Select work environment</option>
+  <option value="full-remote">Fully Remote</option>
+  <option value="hybrid">Hybrid</option>
+  <option value="onsite">On-site</option>
+</select>
+          </div>
+
+          <div class="form-group">
+            <label>Company Industry/Domain</label>
+            <input type="text" id="industry" placeholder="e.g., AI/ML, FinTech, Healthcare">
+          </div>
+
+          <div class="form-group">
+            <label>Any concerns or notes?</label>
+            <textarea id="concerns" placeholder="e.g., Long commute, unclear growth path, company culture concerns..."></textarea>
+          </div>
+        </div>
+       <div class="form-group">
+  <label>Job Requirements (Copy from job posting - what you need to have)</label>
+  <textarea id="jobRequirements" placeholder="e.g., 5+ years systems engineering, TS/SCI clearance required, Python experience, Bachelor's degree, etc."></textarea>
+</div>
+
+        <div class="button-row">
+          <button class="btn-primary" id="analyzeBtn" onclick="analyzeOffer()">Analyze This Offer</button>
+        </div>
+      </div>
+
+      <!-- RESULT SCREEN -->
+      <div id="resultScreen" class="hidden">
+        <div class="app-header">
+          <button class="back-button" onclick="goToJobScreen()">←</button>
+          <h1>Analysis</h1>
+        </div>
+        
+        <div id="resultContent"></div>
+
+        <div class="email-signup" style="margin: 20px 0;">
+          <h3>📧 Want to track more offers?</h3>
+          <input type="email" id="emailSignupResult" placeholder="your@email.com">
+          <button onclick="signupEmailResult()" class="btn-secondary">Join the waitlist</button>
+          <div id="signupStatusResult" class="email-signup-status"></div>
+        </div>
+
+        <div class="email-capture">
+          <p><strong>💾 Save This Analysis</strong></p>
+          <div class="email-input-row">
+            <input type="email" id="resultEmail" placeholder="your@email.com">
+            <button class="btn-secondary" onclick="saveAnalysisToEmail()">📧 Email</button>
+            <button class="btn-secondary" onclick="exportToPDF()">📥 PDF</button>
+          </div>
+          <div id="emailStatus" class="email-status"></div>
+        </div>
+
+        <div class="button-row">
+          <button class="btn-primary" onclick="goToJobScreen()">Analyze Another</button>
+          <button class="btn-secondary" onclick="goToProfileScreen()">Update Profile</button>
+        </div>
+      </div>
+
+      <!-- HISTORY SCREEN -->
+      <div id="historyScreen" class="hidden">
+        <div class="app-header">
+          <button class="back-button" onclick="goToProfileScreen()">←</button>
+          <h1>Your Decisions</h1>
+        </div>
+        <div id="historyContent"></div>
+        <div class="button-row">
+          <button class="btn-secondary" onclick="goToProfileScreen()">Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+ <script>
+   localStorage.removeItem('ScreenJob_currentScreen');
+    localStorage.removeItem('ScreenJob_activeScreen');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    
+    let resumeData = null;
+    let decisions = [];
+    let lastAnalysis = null;
+
+    // Initialize analysis count from localStorage
+    let analysisCount = parseInt(localStorage.getItem('ScreenJob_analysisCount') || '0');
+
+    ['prioritySalary', 'priorityBalance', 'priorityGrowth', 'priorityStability', 'priorityRemote', 'priorityBrand'].forEach(id => {
+      document.getElementById(id).addEventListener('input', (e) => {
+        const name = id.replace('priority', '').toLowerCase();
+        document.getElementById(name + 'Value').textContent = e.target.value;
+      });
+    });
+
+    function signupEmail() {
+      const email = document.getElementById('emailSignup').value;
+      const statusEl = document.getElementById('signupStatus');
+      
+      if (!email) {
+        statusEl.textContent = '❌ Email required';
+        statusEl.classList.add('error');
+        return;
+      }
+
+      // Track signup attempt
+      gtag('event', 'email_signup_landing', {
+        'email': email
+      });
+
+      statusEl.textContent = '⏳ Signing up...';
+      statusEl.classList.remove('error');
+
+      fetch('https://formspree.io/f/mjkjwvwr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source: 'landing' })
+      })
+      .then(() => {
+        statusEl.textContent = '✅ Thanks! Check your email for updates.';
+        document.getElementById('emailSignup').value = '';
+      })
+      .catch((err) => {
+        console.error(err);
+        statusEl.textContent = '✅ Thanks! We got your email.';
+        document.getElementById('emailSignup').value = '';
+      });
+    }
+
+    function signupEmailResult() {
+      const email = document.getElementById('emailSignupResult').value;
+      const statusEl = document.getElementById('signupStatusResult');
+      
+      if (!email) {
+        statusEl.textContent = '❌ Email required';
+        statusEl.classList.add('error');
+        return;
+      }
+
+      // Track signup attempt
+      gtag('event', 'email_signup_result', {
+        'email': email
+      });
+
+      statusEl.textContent = '⏳ Signing up...';
+      statusEl.classList.remove('error');
+
+      fetch('https://formspree.io/f/mjkjwvwr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source: 'result_screen' })
+      })
+      .then(() => {
+        statusEl.textContent = '✅ Thanks! You\'re on the list.';
+        document.getElementById('emailSignupResult').value = '';
+      })
+      .catch((err) => {
+        console.error(err);
+        statusEl.textContent = '✅ Thanks! You\'re on the list.';
+        document.getElementById('emailSignupResult').value = '';
+      });
+    }
+
+   
+
+    
+
+    function goToProfileScreen() { showScreen('profileScreen'); }
+function goToJobScreen() {
+  if (!resumeData || !resumeData.text || resumeData.text.trim().length === 0) {
+    alert('⚠️ Please upload your resume first to get accurate analysis');
+    return;
+  }
+  showScreen('jobScreen');
+}
+   
+    async function handleResumeUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById('resumeStatus');
+      const extractBtn = document.getElementById('extractResumeBtn');
+      
+      statusEl.textContent = '⏳ Reading resume...';
+      statusEl.classList.remove('empty');
+
+      try {
+        let text = '';
+        if (file.type === 'application/pdf') {
+          text = await extractTextFromPDF(file);
+        } else if (file.type === 'text/plain') {
+          text = await file.text();
+        } else {
+          throw new Error('Unsupported file type');
+        }
+
+        resumeData = { text, fileName: file.name };
+        statusEl.innerHTML = `✅ Resume loaded: <strong>${file.name}</strong>`;
+        statusEl.classList.remove('empty');
+        extractBtn.style.display = 'block';
+      } catch (error) {
+        console.error('Error reading resume:', error);
+        statusEl.textContent = '❌ Error reading file. Try again.';
+        statusEl.classList.add('empty');
+        extractBtn.style.display = 'none';
+      }
+    }
+
+    async function extractTextFromPDF(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+      let text = '';
+      
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map(item => item.str).join(' ') + '\n';
+      }
+      return text;
+    }
+
+  async function extractFromUrl() {
+  const url = document.getElementById('jobPostingUrl').value.trim();
+  if (!url) {
+    alert('Please enter a job posting URL');
+    return;
+  }
+
+  const button = event.target;
+  button.innerHTML = '<span class="spinner-big"></span> Loading...';
+  button.disabled = true;
+
+  try {
+    // Fetch the webpage content
+    const response = await fetch('/api/extract-from-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+
+    if (!response.ok) throw new Error('Failed to fetch URL');
+    
     const data = await response.json();
-    const textContent = data.candidates[0].content.parts[0].text;
-    const cleanJson = textContent.replace(/```json\n?|\n?```/g, '').trim();
-    const analysis = JSON.parse(cleanJson);
-    return res.status(200).json(analysis);
+    const jobPosting = data.content;
+
+    // Auto-fill the textarea with the fetched content
+    document.getElementById('jobPostingPaste').value = jobPosting;
+
+    // Automatically extract the job data
+    await extractJobDataFromFetch(jobPosting);
+
+    button.textContent = '✅ Loaded!';
+    setTimeout(() => {
+      button.textContent = '🔗 Load from URL';
+      button.disabled = false;
+    }, 2000);
   } catch (error) {
-    console.error('Analysis error:', error);
-    return res.status(500).json({ error: 'Failed to analyze offer', details: error.message });
+    console.error('Error:', error);
+    alert('Failed to load URL. Make sure it\'s a valid job posting link.');
+    button.textContent = '🔗 Load from URL';
+    button.disabled = false;
   }
 }
+
+async function extractJobDataFromFetch(jobPosting) {
+  const button = document.querySelector('[onclick="extractJobData()"]');
+  button.innerHTML = '<span class="spinner-big"></span> Extracting...';
+  button.disabled = true;
+
+  try {
+    const response = await fetch("/api/extract-job", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jobPosting })
+    });
+
+    if (!response.ok) throw new Error('API error');
+    const extracted = await response.json();
+
+    if (extracted.jobTitle) document.getElementById('jobTitle').value = extracted.jobTitle;
+    if (extracted.company) document.getElementById('company').value = extracted.company;
+    if (extracted.baseSalary) document.getElementById('baseSalary').value = extracted.baseSalary;
+    if (extracted.equity) document.getElementById('equity').value = extracted.equity;
+    if (extracted.bonus) document.getElementById('bonus').value = extracted.bonus;
+    if (extracted.hoursPerWeek) document.getElementById('hoursPerWeek').value = extracted.hoursPerWeek;
+    if (extracted.workEnv) document.getElementById('workEnv').value = extracted.workEnv;
+    if (extracted.fundingStage) document.getElementById('fundingStage').value = extracted.fundingStage;
+    if (extracted.teamSize) document.getElementById('teamSize').value = extracted.teamSize;
+    if (extracted.industry) document.getElementById('industry').value = extracted.industry;
+    if (extracted.requirements) document.getElementById('jobRequirements').value = extracted.requirements;
+
+    button.textContent = '✅ Filled!';
+    setTimeout(() => {
+      button.textContent = '🤖 Auto-Fill from Text';
+      button.disabled = false;
+    }, 2000);
+  } catch (error) {
+    console.error('Error:', error);
+    button.textContent = '🤖 Auto-Fill from Text';
+    button.disabled = false;
+  }
+}
+
+  
+
+async function extractResumeData() {
+  if (!resumeData) return;
+
+  const btn = document.getElementById('extractResumeBtn');
+  btn.innerHTML = '<span class="spinner-big"></span> Extracting...';
+  btn.disabled = true;
+
+  try {
+    const response = await fetch("/api/extract-resume", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resumeText: resumeData.text })
+    });
+
+    if (!response.ok) throw new Error('API error');
+    const extracted = await response.json();
+
+    if (extracted.currentJobTitle) {
+      document.getElementById('currentJobTitle').value = extracted.currentJobTitle;
+    }
+
+    // Store extracted data
+    window.extractedData = {
+      skills: extracted.skills || [],
+      certifications: extracted.certifications || [],
+      other: []
+    };
+
+    // Display sections only if they have data
+    if (window.extractedData.skills && window.extractedData.skills.length > 0) {
+      displayExtractedSection('skills', window.extractedData.skills, 'extractedSkillsSection');
+    }
+    if (window.extractedData.certifications && window.extractedData.certifications.length > 0) {
+      displayExtractedSection('certifications', window.extractedData.certifications, 'extractedCertsSection');
+    }
+    if (window.extractedData.other && window.extractedData.other.length > 0) {
+      displayExtractedSection('other', window.extractedData.other, 'extractedOtherSection');
+    }
+
+    if (extracted.currentCompany) {
+      document.getElementById('currentCompany').value = extracted.currentCompany;
+    }
+    if (extracted.yearsOfExperience) {
+      document.getElementById('yearsExp').value = extracted.yearsOfExperience;
+    }
+   if (extracted.achievements && extracted.achievements.length > 0) {
+  document.getElementById('achievements').value = extracted.achievements.join(', ');
+}
+
+    btn.innerHTML = '✅ Extracted!';
+    setTimeout(() => {
+      btn.textContent = '🤖 Extract from Resume';
+      btn.disabled = false;
+    }, 2000);
+
+  } catch (error) {
+    console.error('Extraction error:', error);
+    btn.textContent = '❌ Failed';
+    setTimeout(() => {
+      btn.textContent = '🤖 Extract from Resume';
+      btn.disabled = false;
+    }, 2000);
+  }
+}
+
+    async function extractJobData() {
+      const jobPosting = document.getElementById('jobPostingPaste').value.trim();
+      if (!jobPosting) {
+        alert('Please paste a job posting first');
+        return;
+      }
+
+      const button = event.target;
+button.innerHTML = '<span class="spinner-big"></span> Extracting...';      button.disabled = true;
+
+      try {
+        const response = await fetch("/api/extract-job", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jobPosting })
+        });
+
+        if (!response.ok) throw new Error('API error');
+        const extracted = await response.json();
+
+        if (extracted.jobTitle) document.getElementById('jobTitle').value = extracted.jobTitle;
+        if (extracted.company) document.getElementById('company').value = extracted.company;
+        if (extracted.baseSalary) document.getElementById('baseSalary').value = extracted.baseSalary;
+        if (extracted.equity) document.getElementById('equity').value = extracted.equity;
+        if (extracted.bonus) document.getElementById('bonus').value = extracted.bonus;
+        if (extracted.hoursPerWeek) document.getElementById('hoursPerWeek').value = extracted.hoursPerWeek;
+        if (extracted.workEnv) document.getElementById('workEnv').value = extracted.workEnv;
+        if (extracted.fundingStage) document.getElementById('fundingStage').value = extracted.fundingStage;
+        if (extracted.teamSize) document.getElementById('teamSize').value = extracted.teamSize;
+        if (extracted.industry) document.getElementById('industry').value = extracted.industry;
+       if (extracted.requirements) document.getElementById('jobRequirements').value = extracted.requirements;
+
+
+        button.textContent = '✅ Filled!';
+        setTimeout(() => {
+          button.textContent = '🤖 Auto-Fill from Posting';
+          button.disabled = false;
+        }, 2000);
+
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to extract. Try again or fill manually.');
+        button.textContent = '🤖 Auto-Fill from Posting';
+        button.disabled = false;
+      }
+    }
+
+async function analyzeOffer() {
+  const jobTitle = document.getElementById('jobTitle').value.trim();
+  const company = document.getElementById('company').value.trim();
+  const currentSalary = parseInt(document.getElementById('currentSalary').value) || 0;
+  const baseSalary = parseInt(document.getElementById('baseSalary').value) || 0;
+
+  if (!jobTitle || !company) {
+    alert('Please fill in job title and company');
+    return;
+  }
+
+  if (jobTitle.length < 3 || company.length < 3) {
+    alert('Please enter a real job title and company name');
+    return;
+  }
+
+  if (
+    jobTitle.toLowerCase().includes('test') && jobTitle.length <= 10 ||
+    company.toLowerCase().includes('test') && company.length <= 10 ||
+    jobTitle.match(/^(asdf|qwer|123|xxx|yyyy|z+z)$/i) ||
+    company.match(/^(asdf|qwer|123|xxx|yyyy|z+z)$/i)
+  ) {
+    alert('That looks like test data. Please enter a real job title and company');
+    return;
+  }
+
+  if (analysisCount > 0) {
+    showPaymentModal();
+    return;
+  }
+
+  analysisCount++;
+  localStorage.setItem('ScreenJob_analysisCount', analysisCount);
+
+  gtag('event', 'analyze_offer_clicked', {
+    'job_title': jobTitle,
+    'company': company,
+    'salary': baseSalary
+  });
+
+  const btn = document.getElementById('analyzeBtn');
+  const progressContainer = document.createElement('div');
+  progressContainer.id = 'analysisProgressContainer';
+  progressContainer.className = 'analysis-progress';
+  progressContainer.innerHTML = '<div class="analysis-progress-bar"></div>';
+  btn.parentElement.insertBefore(progressContainer, btn);
+  btn.innerHTML = '<span class="spinner-big"></span> AI Analyzing...';
+  btn.disabled = true;
+
+  let progress = 0;
+  const progressBar = progressContainer.querySelector('.analysis-progress-bar');
+  const progressInterval = setInterval(() => {
+    progress += Math.random() * 30;
+    progressBar.style.width = Math.min(progress, 90) + '%';
+  }, 300);
+
+ const profile = {
+    currentJobTitle: document.getElementById('currentJobTitle').value,
+    currentCompany: document.getElementById('currentCompany').value,
+    currentSalary: currentSalary,
+    currentHours: parseInt(document.getElementById('currentHours').value) || 0,
+    yearsExp: parseInt(document.getElementById('yearsExp').value) || 0,
+    currentCompanySize: document.getElementById('currentCompanySize').value,
+    priority_salary: parseInt(document.getElementById('prioritySalary').value),
+    priority_balance: parseInt(document.getElementById('priorityBalance').value),
+    priority_growth: parseInt(document.getElementById('priorityGrowth').value),
+    priority_stability: parseInt(document.getElementById('priorityStability').value),
+    priority_remote: parseInt(document.getElementById('priorityRemote').value),
+    priority_brand: parseInt(document.getElementById('priorityBrand').value),
+    resumeData: resumeData ? resumeData.text.substring(0, 2000) : null,
+    extractedData: window.extractedData || { skills: [], certifications: [], other: [] },
+    achievements: document.getElementById('achievements').value
+  };
+
+  const job = {
+  jobTitle: jobTitle,
+  company: company,
+  baseSalary: baseSalary,
+  equity: document.getElementById('equity').value,
+  bonus: document.getElementById('bonus').value,
+  hoursPerWeek: parseInt(document.getElementById('hoursPerWeek').value) || 0,
+  workEnv: document.getElementById('workEnv').value,
+  fundingStage: document.getElementById('fundingStage').value,
+  teamSize: parseInt(document.getElementById('teamSize').value) || 0,
+  industry: document.getElementById('industry').value,
+  concerns: document.getElementById('concerns').value,
+  requirements: document.getElementById('jobRequirements').value
+};
+  try {
+    const response = await fetch("/api/analyze-offer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile, job })
+    });
+
+    if (!response.ok) throw new Error('API error');
+    const aiAnalysis = await response.json();
+    const salaryData = getSalaryData(jobTitle);
+
+    clearInterval(progressInterval);
+    progressBar.style.width = '100%';
+
+    setTimeout(() => {
+      progressContainer.remove();
+    }, 500);
+    
+    decisions.push({ ...aiAnalysis, job, profile, salaryData, timestamp: new Date().toLocaleString() });
+    displayResult(aiAnalysis, salaryData, job, profile);
+    showScreen('resultScreen');
+    showFeedbackTab();
+
+  } catch (error) {
+    console.error('Analysis error:', error);
+    alert('Error during analysis. Please try again.');
+  } finally {
+    btn.textContent = 'Analyze This Offer';
+    btn.disabled = false;
+    clearInterval(progressInterval);
+    const container = document.getElementById('analysisProgressContainer');
+    if (container) container.remove();
+  }
+}
+
+function getSalaryData(jobTitle) {
+      // Try to get real BLS data, fallback to estimates if API fails
+      fetchBLSSalaryData(jobTitle).then(data => {
+        if (data) {
+          lastBLSData = data;
+        }
+      });
+      
+      // Fallback salary ranges (used if BLS API fails or is slow)
+      const ranges = {
+        'engineer': { low: 90000, high: 250000, median: 160000, source: 'estimate' },
+        'manager': { low: 110000, high: 280000, median: 180000, source: 'estimate' },
+        'designer': { low: 80000, high: 180000, median: 130000, source: 'estimate' },
+        'product': { low: 100000, high: 250000, median: 170000, source: 'estimate' },
+        'developer': { low: 85000, high: 220000, median: 150000, source: 'estimate' },
+        'analyst': { low: 70000, high: 180000, median: 120000, source: 'estimate' },
+        'architect': { low: 120000, high: 300000, median: 200000, source: 'estimate' },
+        'default': { low: 60000, high: 180000, median: 110000, source: 'estimate' }
+      };
+      const key = Object.keys(ranges).find(k => jobTitle.toLowerCase().includes(k)) || 'default';
+      return ranges[key];
+    }
+
+    async function fetchBLSSalaryData(jobTitle) {
+      try {
+        // BLS API endpoint (free tier - no key required for basic queries)
+        const response = await fetch('https://api.bls.gov/publicAPI/v2/timeseries/data/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            seriesid: ['OES000000'],
+            startyear: 2023,
+            endyear: 2024
+          })
+        });
+        
+        const data = await response.json();
+        
+        // Parse BLS data
+        if (data.Results && data.Results.series && data.Results.series[0]) {
+          const salary = data.Results.series[0].data[0].value;
+          return {
+            median: parseInt(salary) * 1000,
+            low: parseInt(salary) * 800,
+            high: parseInt(salary) * 1200,
+            source: 'BLS (Real Government Data)'
+          };
+        }
+      } catch (error) {
+        console.log('BLS API call failed, using fallback:', error);
+      }
+      return null;
+    }
+    
+  let lastBLSData = null;
+
+    function displayResult(analysis, salaryData, job, profile) {
+      lastAnalysis = { analysis, salaryData, job, profile };
+  
+  // ADD THESE HERE:
+  const salaryPercent = profile.currentSalary > 0 
+    ? ((job.baseSalary - profile.currentSalary) / profile.currentSalary * 100).toFixed(1)
+    : null;
+  const hoursDiff = profile.currentHours > 0 
+    ? job.hoursPerWeek - profile.currentHours 
+    : null;
+  const hourlyRateCurrent = profile.currentSalary && profile.currentHours > 0 
+    ? (profile.currentSalary / (profile.currentHours * 52)).toFixed(0)
+    : null;
+  const hourlyRateNew = job.baseSalary && job.hoursPerWeek 
+    ? (job.baseSalary / (job.hoursPerWeek * 52)).toFixed(0)
+    : null;
+      const percentile = Math.round(((job.baseSalary - salaryData.low) / (salaryData.high - salaryData.low)) * 100);
+
+      const recClass = analysis.recommendation === 'TAKE' ? 'take' : 
+                       analysis.recommendation === 'PASS' ? 'pass' : 'negotiate';
+      
+      
+      let html = `
+        <div class="recommendation ${recClass}">${analysis.recommendation}</div>
+        <div class="score">Alignment Score: ${analysis.score}/10 (${analysis.confidence}% confidence)</div>
+        <div class="explanation">${analysis.reasoning}</div>
+
+        <div class="ai-insight">
+          <h3>💼 Career Impact</h3>
+          <p>${analysis.careerImpact}</p>
+        </div>
+
+      <div class="comparison">
+  <h3 style="color: #3b82f6; margin-bottom: 15px;">📊 Offer vs Current</h3>
+  <div class="comparison-row">
+    <div class="comparison-label">Base Salary</div>
+    <div class="comparison-current">${profile.currentSalary ? '$' + profile.currentSalary.toLocaleString() : 'N/A'}</div>
+    <div class="comparison-new">${job.baseSalary ? '$' + job.baseSalary.toLocaleString() + (salaryPercent ? ' (' + (salaryPercent > 0 ? '+' : '') + salaryPercent + '%)' : '') : 'N/A'}</div>
+  </div>
+  <div class="comparison-row">
+    <div class="comparison-label">Hours/Week</div>
+    <div class="comparison-current">${profile.currentHours ? profile.currentHours + 'h' : 'N/A'}</div>
+    <div class="comparison-new">${job.hoursPerWeek ? job.hoursPerWeek + 'h' + (hoursDiff ? ' (' + (hoursDiff > 0 ? '+' : '') + hoursDiff + 'h)' : '') : 'N/A'}</div>
+  </div>
+  <div class="comparison-row">
+    <div class="comparison-label">Hourly Rate</div>
+    <div class="comparison-current">${hourlyRateCurrent ? '$' + hourlyRateCurrent + '/hr' : 'N/A'}</div>
+    <div class="comparison-new">${hourlyRateNew ? '$' + hourlyRateNew + '/hr' : 'N/A'}</div>
+  </div>
+</div>
+
+       <div class="salary-data">
+  <h3>📈 Market Data for ${job.jobTitle}</h3>
+  <p><strong>Your offer:</strong> ${job.baseSalary.toLocaleString()}</p>
+  <p><strong>Market range:</strong> ${salaryData.low.toLocaleString()} - ${salaryData.high.toLocaleString()}</p>
+  <p><strong>Your position:</strong> ${percentile}th percentile (${percentile < 30 ? 'below' : percentile < 70 ? 'at' : 'above'} market)</p>
+  <p style="font-size: 12px; color: #909090; margin-top: 12px;">📊 Data source: ${salaryData.source || 'Industry estimates'}</p>
+  ${job.equity ? `<p><strong>Equity:</strong> ${job.equity}</p>` : ''}
+  ${job.bonus ? `<p><strong>Bonus:</strong> ${job.bonus}</p>` : ''}
+</div>
+
+        <div class="pros-cons">
+          <h3 style="color: #10b981; margin-bottom: 12px;">✅ Strengths</h3>
+          ${analysis.strengths.map(s => `<div class="pro-item">${s}</div>`).join('')}
+        </div>
+
+        <div class="pros-cons">
+          <h3 style="color: #ff6b6b; margin-bottom: 12px;">⚠️ Weaknesses</h3>
+          ${analysis.weaknesses.map(w => `<div class="con-item">${w}</div>`).join('')}
+        </div>
+
+        ${analysis.recommendation === 'NEGOTIATE' && analysis.negotiableItems ? `
+        <div class="ai-insight">
+          <h3>🤝 What to Negotiate</h3>
+          <p style="margin-bottom: 12px; color: #10b981;">This offer has potential. Push back on these specific items:</p>
+          ${analysis.negotiableItems.map(p => `<p style="margin: 8px 0;">• ${p}</p>`).join('')}
+        </div>
+        ` : ''}
+
+        <div class="ai-insight">
+          <h3>⚡ Risk Factors</h3>
+          <p>${analysis.riskFactors}</p>
+        </div>
+
+        <div class="section">
+          <h2>Scoring Breakdown</h2>
+          ${Object.entries(analysis.scoringBreakdown).map(([key, val]) => 
+            `<div class="breakdown-item"><div class="breakdown-key">${key}</div><div class="breakdown-value">${val}</div></div>`
+          ).join('')}
+        </div>
+
+        <div class="ai-insight">
+          <h3>❓ Questions to Ask Employer</h3>
+          ${analysis.questions.map(q => `<p>• ${q}</p>`).join('')}
+        </div>
+      `;
+
+      document.getElementById('resultContent').innerHTML = html;
+    }
+
+    function showFeedbackTab() {
+      document.getElementById('feedbackTab').classList.add('show');
+    }
+
+    function hideFeedbackTab() {
+      document.getElementById('feedbackTab').classList.remove('show');
+    }
+
+    function showFeedbackModal() {
+      hideFeedbackTab();
+      document.getElementById('feedbackOverlay').classList.add('show');
+      document.getElementById('feedbackModal').classList.add('show');
+    }
+
+    function closeFeedbackModal() {
+      document.getElementById('feedbackOverlay').classList.remove('show');
+      document.getElementById('feedbackModal').classList.remove('show');
+      document.getElementById('feedbackScore').value = '';
+      document.getElementById('feedbackText').value = '';
+      showFeedbackTab();
+    }
+
+    function submitFeedback() {
+      const score = document.getElementById('feedbackScore').value;
+      const text = document.getElementById('feedbackText').value;
+
+      if (!score) {
+        alert('Please rate the analysis');
+        return;
+      }
+
+      const feedback = {
+        score,
+        text,
+        analysis: lastAnalysis,
+        timestamp: new Date().toISOString()
+      };
+
+      console.log('Feedback submitted:', feedback);
+      
+      try {
+        let feedbackList = JSON.parse(localStorage.getItem('ScreenJob_feedback') || '[]');
+        feedbackList.push(feedback);
+        localStorage.setItem('ScreenJob_feedback', JSON.stringify(feedbackList));
+      } catch (e) {
+        console.log('Feedback stored in memory');
+      }
+
+      alert('✅ Thanks for the feedback! Helps us improve.');
+      closeFeedbackModal();
+    }
+
+    function skipFeedback() {
+      closeFeedbackModal();
+    }
+
+    function saveAnalysisToEmail() {
+      const email = document.getElementById('resultEmail').value.trim();
+      const statusEl = document.getElementById('emailStatus');
+
+      if (!email) {
+        statusEl.textContent = '❌ Please enter your email';
+        statusEl.classList.add('error');
+        return;
+      }
+
+      if (!email.includes('@')) {
+        statusEl.textContent = '❌ Invalid email';
+        statusEl.classList.add('error');
+        return;
+      }
+
+      statusEl.classList.remove('error');
+      statusEl.textContent = '⏳ Sending...';
+
+      setTimeout(() => {
+        statusEl.textContent = '✅ Saved! (Backend integration coming soon)';
+        statusEl.classList.remove('error');
+        document.getElementById('resultEmail').value = '';
+        setTimeout(() => {
+          statusEl.textContent = '';
+        }, 4000);
+      }, 800);
+    }
+
+    function exportToPDF() {
+      if (!lastAnalysis) return;
+
+      const { analysis, salaryData, job, profile } = lastAnalysis;
+      
+      const htmlContent = `
+        <html>
+          <head>
+            <title>ScreenJob - ${job.company} Analysis</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+              h1 { color: #3b82f6; margin-bottom: 10px; }
+              h2 { color: #3b82f6; margin-top: 25px; margin-bottom: 15px; border-bottom: 2px solid #3b82f6; padding-bottom: 8px; }
+              .section { margin-bottom: 20px; }
+              .label { font-weight: bold; color: #333; }
+              .value { margin-left: 10px; color: #555; }
+              .recommendation { font-size: 24px; font-weight: bold; padding: 15px; border-radius: 8px; margin: 15px 0; }
+              .take { background-color: #d4f4dd; color: #00a341; }
+              .pass { background-color: #f4d4d4; color: #cc0000; }
+              .negotiate { background-color: #f4e8d4; color: #cc6600; }
+              ul { margin: 10px 0; }
+              li { margin: 8px 0; }
+              table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+              th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+              th { background-color: #f0f0f0; font-weight: bold; }
+            </style>
+          </head>
+          <body>
+            <h1>ScreenJob - Job Offer Analysis</h1>
+            <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+            <p><strong>Company:</strong> ${job.company} | <strong>Position:</strong> ${job.jobTitle}</p>
+            
+            <h2>Recommendation</h2>
+            <div class="recommendation ${analysis.recommendation.toLowerCase().replace(' ', '-').split(' ')[0]}">
+              ${analysis.recommendation} - Score: ${analysis.score}/10 (${analysis.confidence}% confidence)
+            </div>
+            
+            <h2>Executive Summary</h2>
+            <p>${analysis.reasoning}</p>
+            
+            <h2>Career Impact</h2>
+            <p>${analysis.careerImpact}</p>
+            
+            <h2>Offer Comparison</h2>
+            <table>
+              <tr>
+                <th>Metric</th>
+                <th>Current</th>
+                <th>New Offer</th>
+              </tr>
+              <tr>
+                <td>Base Salary</td>
+                <td>${profile.currentSalary.toLocaleString()}</td>
+                <td>${job.baseSalary.toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td>Change</td>
+                <td colspan="2">${((job.baseSalary - profile.currentSalary) / profile.currentSalary * 100).toFixed(1)}%</td>
+              </tr>
+              <tr>
+                <td>Hours/Week</td>
+                <td>${profile.currentHours}h</td>
+                <td>${job.hoursPerWeek}h</td>
+              </tr>
+              <tr>
+                <td>Hourly Rate</td>
+                <td>${(profile.currentSalary / (profile.currentHours * 52)).toFixed(0)}/hr</td>
+                <td>${(job.baseSalary / (job.hoursPerWeek * 52)).toFixed(0)}/hr</td>
+              </tr>
+            </table>
+            
+            <h2>Strengths</h2>
+            <ul>
+              ${analysis.strengths.map(s => `<li>${s}</li>`).join('')}
+            </ul>
+            
+            <h2>Weaknesses</h2>
+            <ul>
+              ${analysis.weaknesses.map(w => `<li>${w}</li>`).join('')}
+            </ul>
+            
+            ${analysis.recommendation === 'NEGOTIATE' && analysis.negotiableItems ? `
+            <h2>Negotiation Points</h2>
+            <ul>
+              ${analysis.negotiableItems.map(n => `<li>${n}</li>`).join('')}
+            </ul>
+            ` : ''}
+            
+            <h2>Market Data</h2>
+            <p><strong>Your Offer:</strong> ${job.baseSalary.toLocaleString()}</p>
+            <p><strong>Market Range:</strong> ${salaryData.low.toLocaleString()} - ${salaryData.high.toLocaleString()}</p>
+            <p><strong>Percentile:</strong> ${Math.round(((job.baseSalary - salaryData.low) / (salaryData.high - salaryData.low)) * 100)}th</p>
+            
+            <h2>Risk Factors</h2>
+            <p>${analysis.riskFactors}</p>
+            
+            <h2>Questions to Ask Employer</h2>
+            <ul>
+              ${analysis.questions.map(q => `<li>${q}</li>`).join('')}
+            </ul>
+            
+            <h2>Scoring Breakdown</h2>
+            ${Object.entries(analysis.scoringBreakdown).map(([key, val]) => `
+              <div class="section">
+                <div class="label">${key.toUpperCase()}:</div>
+                <div class="value">${val}</div>
+              </div>
+            `).join('')}
+          </body>
+        </html>
+      `;
+
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      script.onload = function() {
+        const element = document.createElement('div');
+        element.innerHTML = htmlContent;
+        
+        const opt = {
+          margin: 10,
+          filename: `ScreenJob-${job.company}-Analysis.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+        };
+        
+        html2pdf().set(opt).from(element).save();
+      };
+      document.head.appendChild(script);
+    }
+
+    function showHistory() {
+      if (decisions.length === 0) {
+        document.getElementById('historyContent').innerHTML = '<p style="color:#6b7280; text-align:center; padding: 30px;">No decisions yet. Evaluate your first offer!</p>';
+      } else {
+        let html = '';
+        decisions.forEach((d) => {
+          html += `<div class="history-item">
+            <div class="history-rec">${d.recommendation} (${d.score}/10)</div>
+            <div style="color: #4b5563; font-weight: 500;">${d.job.jobTitle} @ ${d.job.company}</div>
+            <div style="color:#909090; font-size:13px;">
+              ${d.job.baseSalary.toLocaleString()} • ${d.job.hoursPerWeek}h/week • ${d.job.fundingStage}
+            </div>
+            <div class="history-date">${d.timestamp}</div>
+          </div>`;
+        });
+        document.getElementById('historyContent').innerHTML = html;
+      }
+      showScreen('historyScreen');
+    }
+
+    document.getElementById('feedbackTab').addEventListener('click', showFeedbackModal);
+   let stripe = null;
+let elements = null;
+let cardElement = null;
+let selectedPaymentPlan = 'once';
+
+async function initStripe() {
+  if (stripe) return;
+  stripe = Stripe('pk_live_51SVZ8kLwfVOy2VdFaFArPFoA3RYVC5QPif3hOkFr88LufLfXeDGBosbqxmPtJ9ntwNwSnzErfP1E10jS06R34tMU00RgkIjmqs');  elements = stripe.elements();
+  cardElement = elements.create('card');
+  cardElement.mount('#card-element');
+}
+
+function showPaymentModal() {
+  document.getElementById('paymentOverlay').classList.add('show');
+  document.getElementById('paymentModal').classList.add('show');
+  document.getElementById('paymentForm').style.display = 'block';
+  document.getElementById('paymentSuccess').style.display = 'none';
+  initStripe();
+}
+
+function closePaymentModal() {
+  document.getElementById('paymentOverlay').classList.remove('show');
+  document.getElementById('paymentModal').classList.remove('show');
+}
+
+function selectPayOption(plan) {
+  selectedPaymentPlan = plan;
+  document.getElementById('payOption1').classList.toggle('selected', plan === 'once');
+  document.getElementById('payOption2').classList.toggle('selected', plan === 'monthly');
+  document.getElementById('submitPayment').textContent = plan === 'once' ? 'Pay $2.99' : 'Subscribe $9.99/mo';
+}
+
+document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const submitBtn = document.getElementById('submitPayment');
+  submitBtn.disabled = true;
+  submitBtn.textContent = '⏳ Processing...';
+
+  try {
+    const { paymentMethod, error } = await stripe.createPaymentMethod({
+      type: 'card',
+      card: cardElement
+    });
+
+    if (error) throw new Error(error.message);
+
+    const amount = selectedPaymentPlan === 'monthly' ? 999 : 299;
+    const response = await fetch('/api/process-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paymentMethodId: paymentMethod.id, amount, planType: selectedPaymentPlan })
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      // Payment succeeded - NOW run the analysis
+      await runAnalysisAfterPayment();
+      
+      document.getElementById('paymentForm').style.display = 'none';
+      document.getElementById('paymentSuccess').style.display = 'block';
+    } else {
+      throw new Error(result.error);
+    }
+  } catch (error) {
+    document.getElementById('card-errors').textContent = error.message;
+    submitBtn.disabled = false;
+    submitBtn.textContent = selectedPaymentPlan === 'monthly' ? 'Subscribe $9.99/mo' : 'Pay $2.99';
+  }
+});
+
+async function runAnalysisAfterPayment() {
+  const jobTitle = document.getElementById('jobTitle').value;
+  const company = document.getElementById('company').value;
+  const baseSalary = parseInt(document.getElementById('baseSalary').value);
+  const currentSalary = parseInt(document.getElementById('currentSalary').value);
+
+const profile = {
+    currentJobTitle: document.getElementById('currentJobTitle').value,
+    currentCompany: document.getElementById('currentCompany').value,
+    currentSalary: currentSalary,
+    currentHours: parseInt(document.getElementById('currentHours').value) || 0,
+    yearsExp: parseInt(document.getElementById('yearsExp').value) || 0,
+    currentCompanySize: document.getElementById('currentCompanySize').value,
+    priority_salary: parseInt(document.getElementById('prioritySalary').value),
+    priority_balance: parseInt(document.getElementById('priorityBalance').value),
+    priority_growth: parseInt(document.getElementById('priorityGrowth').value),
+    priority_stability: parseInt(document.getElementById('priorityStability').value),
+    priority_remote: parseInt(document.getElementById('priorityRemote').value),
+    priority_brand: parseInt(document.getElementById('priorityBrand').value),
+    resumeData: resumeData ? resumeData.text.substring(0, 2000) : null,
+    extractedData: window.extractedData || { skills: [], certifications: [], other: [] },
+    achievements: document.getElementById('achievements').value
+  };
+ const job = {
+  jobTitle: jobTitle,
+  company: company,
+  baseSalary: baseSalary,
+  equity: document.getElementById('equity').value,
+  bonus: document.getElementById('bonus').value,
+  hoursPerWeek: parseInt(document.getElementById('hoursPerWeek').value) || 0,
+  workEnv: document.getElementById('workEnv').value,
+  fundingStage: document.getElementById('fundingStage').value,
+  teamSize: parseInt(document.getElementById('teamSize').value) || 0,
+  industry: document.getElementById('industry').value,
+  concerns: document.getElementById('concerns').value,
+  requirements: document.getElementById('jobRequirements').value
+};
+
+  const response = await fetch("/api/analyze-offer", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ profile, job })
+  });
+
+  const aiAnalysis = await response.json();
+  const salaryData = getSalaryData(jobTitle);
+  
+  decisions.push({ ...aiAnalysis, job, profile, salaryData, timestamp: new Date().toLocaleString() });
+  lastAnalysis = { analysis: aiAnalysis, salaryData, job, profile };
+}
+
+function completePayment() {
+  closePaymentModal();
+  if (lastAnalysis) {
+    const { analysis, salaryData, job, profile } = lastAnalysis;
+    displayResult(analysis, salaryData, job, profile);
+  }
+  showScreen('resultScreen');
+}
+function closePaymentModal() {
+  document.getElementById('paymentOverlay').classList.remove('show');
+  document.getElementById('paymentModal').classList.remove('show');
+}
+   // Save app state on page load
+window.addEventListener('load', () => {
+  const savedScreen = localStorage.getItem('ScreenJob_currentScreen');
+  if (savedScreen === 'app') {
+    document.getElementById('landingPage').style.display = 'none';
+    document.getElementById('appContainer').classList.add('show');
+    
+    // Always start at profile screen - never restore result screen
+    showScreen('profileScreen');
+  }
+});
+
+// Save state whenever screens change
+function showScreen(screenId) {
+  document.querySelectorAll('[id$="Screen"]').forEach(el => el.classList.add('hidden'));
+  document.getElementById(screenId).classList.remove('hidden');
+  localStorage.setItem('ScreenJob_activeScreen', screenId);
+  hideFeedbackTab();
+}
+
+// Update startApp to save state
+function startApp() {
+  gtag('event', 'start_app_clicked');
+  localStorage.setItem('ScreenJob_currentScreen', 'app');
+  document.getElementById('landingPage').style.display = 'none';
+  document.getElementById('appContainer').classList.add('show');
+  showScreen('profileScreen');
+}
+// Update goToLanding to clear state
+function goToLanding() {
+  localStorage.setItem('ScreenJob_currentScreen', 'landing');
+  document.getElementById('appContainer').classList.remove('show');
+  document.getElementById('landingPage').style.display = 'flex';
+}
+
+  function displayExtractedSection(type, items, sectionId) {
+  const section = document.getElementById(sectionId);
+  if (!section) {
+    console.warn('Section not found:', sectionId);
+    return;
+  }
+  
+  const container = document.getElementById(type === 'skills' ? 'skillsTagsContainer' : 
+                                          type === 'certifications' ? 'certsTagsContainer' : 
+                                          'otherTagsContainer');
+  
+  if (!container) {
+    console.warn('Container not found for type:', type);
+    return;
+  }
+  
+  if (items.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  
+  section.style.display = 'block';
+ container.innerHTML = items.map(item => `
+    <div class="tag">
+      <span style="white-space: nowrap; flex: none;">${item}</span>
+      <button class="tag-remove" onclick="removeTag('${type}', '${item}')">×</button>
+    </div>
+  `).join('');
+}
+
+function removeTag(type, item) {
+  window.extractedData[type] = window.extractedData[type].filter(i => i !== item);
+  const sectionId = type === 'skills' ? 'extractedSkillsSection' : 'extractedCertsSection';
+  displayExtractedSection(type, window.extractedData[type], sectionId);
+}
+
+function addSkill() {
+  const input = document.getElementById('addSkillInput');
+  if (input.value.trim()) {
+    window.extractedData.skills.push(input.value.trim());
+    displayExtractedSection('skills', window.extractedData.skills, 'extractedSkillsSection');
+    input.value = '';
+  }
+}
+
+function addCert() {
+  const input = document.getElementById('addCertInput');
+  if (input.value.trim()) {
+    window.extractedData.certifications.push(input.value.trim());
+    displayExtractedSection('certifications', window.extractedData.certifications, 'extractedCertsSection');
+    input.value = '';
+  }
+}
+
+
+  </script>
+</body>
+</html>
