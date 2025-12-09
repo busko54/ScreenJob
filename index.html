@@ -1001,15 +1001,9 @@ input::placeholder, textarea::placeholder { color: #9ca3af; }
 </div>
 
         <div class="button-row">
-  <button class="btn-primary" id="analyzeBtn" onclick="analyzeOffer()">Analyze This Offer</button>
-</div>
-
-<!-- ADD THIS HERE -->
-<div id="analysisCounter" style="text-align: center; margin-top: 15px; color: #6b7280; font-size: 13px;">
-  <span id="analysesRemaining">5</span> free analyses remaining
-</div>
-<!-- END -->
-     
+          <button class="btn-primary" id="analyzeBtn" onclick="analyzeOffer()">Analyze This Offer</button>
+        </div>
+      </div>
 
       <!-- RESULT SCREEN -->
       <div id="resultScreen" class="hidden">
@@ -1398,18 +1392,12 @@ button.innerHTML = '<span class="spinner-big"></span> Extracting...';      butto
       }
     }
 
-// ========================================
-// FIXED analyzeOffer() function
-// Replace your entire analyzeOffer() function with this
-// ========================================
-
 async function analyzeOffer() {
   const jobTitle = document.getElementById('jobTitle').value.trim();
   const company = document.getElementById('company').value.trim();
   const currentSalary = parseInt(document.getElementById('currentSalary').value) || 0;
   const baseSalary = parseInt(document.getElementById('baseSalary').value) || 0;
 
-  // Validation
   if (!jobTitle || !company) {
     alert('Please fill in job title and company');
     return;
@@ -1430,24 +1418,20 @@ async function analyzeOffer() {
     return;
   }
 
-  // Check paywall
-  if (analysisCount >= 5) {
+  if (analysisCount > 0) {
     showPaymentModal();
     return;
   }
 
-  // Increment counter
   analysisCount++;
   localStorage.setItem('ScreenJob_analysisCount', analysisCount);
 
-  // Analytics
   gtag('event', 'analyze_offer_clicked', {
     'job_title': jobTitle,
     'company': company,
     'salary': baseSalary
   });
 
-  // UI: Show progress
   const btn = document.getElementById('analyzeBtn');
   const progressContainer = document.createElement('div');
   progressContainer.id = 'analysisProgressContainer';
@@ -1464,8 +1448,7 @@ async function analyzeOffer() {
     progressBar.style.width = Math.min(progress, 90) + '%';
   }, 300);
 
-  // Collect data
-  const profile = {
+ const profile = {
     currentJobTitle: document.getElementById('currentJobTitle').value,
     currentCompany: document.getElementById('currentCompany').value,
     currentSalary: currentSalary,
@@ -1484,20 +1467,19 @@ async function analyzeOffer() {
   };
 
   const job = {
-    jobTitle: jobTitle,
-    company: company,
-    baseSalary: baseSalary,
-    equity: document.getElementById('equity').value,
-    bonus: document.getElementById('bonus').value,
-    hoursPerWeek: parseInt(document.getElementById('hoursPerWeek').value) || 0,
-    workEnv: document.getElementById('workEnv').value,
-    fundingStage: document.getElementById('fundingStage').value,
-    teamSize: parseInt(document.getElementById('teamSize').value) || 0,
-    industry: document.getElementById('industry').value,
-    concerns: document.getElementById('concerns').value,
-    requirements: document.getElementById('jobRequirements').value
-  };
-
+  jobTitle: jobTitle,
+  company: company,
+  baseSalary: baseSalary,
+  equity: document.getElementById('equity').value,
+  bonus: document.getElementById('bonus').value,
+  hoursPerWeek: parseInt(document.getElementById('hoursPerWeek').value) || 0,
+  workEnv: document.getElementById('workEnv').value,
+  fundingStage: document.getElementById('fundingStage').value,
+  teamSize: parseInt(document.getElementById('teamSize').value) || 0,
+  industry: document.getElementById('industry').value,
+  concerns: document.getElementById('concerns').value,
+  requirements: document.getElementById('jobRequirements').value
+};
   try {
     const response = await fetch("/api/analyze-offer", {
       method: "POST",
@@ -1516,24 +1498,11 @@ async function analyzeOffer() {
       progressContainer.remove();
     }, 500);
     
-    // Save and display results
     decisions.push({ ...aiAnalysis, job, profile, salaryData, timestamp: new Date().toLocaleString() });
     displayResult(aiAnalysis, salaryData, job, profile);
     showScreen('resultScreen');
     showFeedbackTab();
 
-    // Update counter
-    const remaining = Math.max(0, 5 - analysisCount);
-    const counterEl = document.getElementById('analysesRemaining');
-    const counterContainer = document.getElementById('analysisCounter');
-    
-    if (counterEl) counterEl.textContent = remaining;
-    
-    if (analysisCount >= 4 && counterContainer) {
-      counterContainer.innerHTML = 
-        '<span style="color: #ffb347; font-weight: 600;">⚠️ Last free analysis! Subscribe for unlimited.</span>';
-    }
-    
   } catch (error) {
     console.error('Analysis error:', error);
     alert('Error during analysis. Please try again.');
@@ -2009,18 +1978,13 @@ document.getElementById('paymentForm').addEventListener('submit', async (e) => {
   }
 });
 
-// ========================================
-// PAYMENT FLOW FIX - Copy this into your index.html
-// Replace the existing runAnalysisAfterPayment() and completePayment() functions
-// ========================================
-
 async function runAnalysisAfterPayment() {
   const jobTitle = document.getElementById('jobTitle').value;
   const company = document.getElementById('company').value;
   const baseSalary = parseInt(document.getElementById('baseSalary').value);
   const currentSalary = parseInt(document.getElementById('currentSalary').value);
 
-  const profile = {
+const profile = {
     currentJobTitle: document.getElementById('currentJobTitle').value,
     currentCompany: document.getElementById('currentCompany').value,
     currentSalary: currentSalary,
@@ -2037,88 +2001,42 @@ async function runAnalysisAfterPayment() {
     extractedData: window.extractedData || { skills: [], certifications: [], other: [] },
     achievements: document.getElementById('achievements').value
   };
+ const job = {
+  jobTitle: jobTitle,
+  company: company,
+  baseSalary: baseSalary,
+  equity: document.getElementById('equity').value,
+  bonus: document.getElementById('bonus').value,
+  hoursPerWeek: parseInt(document.getElementById('hoursPerWeek').value) || 0,
+  workEnv: document.getElementById('workEnv').value,
+  fundingStage: document.getElementById('fundingStage').value,
+  teamSize: parseInt(document.getElementById('teamSize').value) || 0,
+  industry: document.getElementById('industry').value,
+  concerns: document.getElementById('concerns').value,
+  requirements: document.getElementById('jobRequirements').value
+};
+
+  const response = await fetch("/api/analyze-offer", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ profile, job })
+  });
+
+  const aiAnalysis = await response.json();
+  const salaryData = getSalaryData(jobTitle);
   
-  const job = {
-    jobTitle: jobTitle,
-    company: company,
-    baseSalary: baseSalary,
-    equity: document.getElementById('equity').value,
-    bonus: document.getElementById('bonus').value,
-    hoursPerWeek: parseInt(document.getElementById('hoursPerWeek').value) || 0,
-    workEnv: document.getElementById('workEnv').value,
-    fundingStage: document.getElementById('fundingStage').value,
-    teamSize: parseInt(document.getElementById('teamSize').value) || 0,
-    industry: document.getElementById('industry').value,
-    concerns: document.getElementById('concerns').value,
-    requirements: document.getElementById('jobRequirements').value
-  };
-
-  try {
-    const response = await fetch("/api/analyze-offer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ profile, job })
-    });
-
-    if (!response.ok) throw new Error('Analysis failed');
-    
-    const aiAnalysis = await response.json();
-    const salaryData = getSalaryData(jobTitle);
-    
-    decisions.push({ ...aiAnalysis, job, profile, salaryData, timestamp: new Date().toLocaleString() });
-    lastAnalysis = { analysis: aiAnalysis, salaryData, job, profile };
-    
-    // ✅ CRITICAL FIX: Display results immediately after analysis completes
-    displayResult(aiAnalysis, salaryData, job, profile);
-    
-    return true; // Signal success
-  } catch (error) {
-    console.error('Analysis error after payment:', error);
-    alert('Analysis failed. Please contact support for a refund.');
-    return false; // Signal failure
-  }
+  decisions.push({ ...aiAnalysis, job, profile, salaryData, timestamp: new Date().toLocaleString() });
+  lastAnalysis = { analysis: aiAnalysis, salaryData, job, profile };
 }
 
-async function completePayment() {
+function completePayment() {
   closePaymentModal();
-  
-  // Show loading state immediately
-  showScreen('resultScreen');
-  document.getElementById('resultContent').innerHTML = `
-    <div style="text-align: center; padding: 40px;">
-      <div class="spinner-big"></div>
-      <p style="color: #6b7280; margin-top: 20px;">Analyzing your offer...</p>
-    </div>
-  `;
-  
-  // Wait for analysis to complete, then show results
-  const success = await runAnalysisAfterPayment();
-  
-  if (!success) {
-    // If analysis failed, show error message
-    document.getElementById('resultContent').innerHTML = `
-      <div style="text-align: center; padding: 40px;">
-        <p style="color: #ff6b6b; font-size: 18px; font-weight: 700;">❌ Analysis Failed</p>
-        <p style="color: #6b7280; margin-top: 10px;">Please contact support for a refund.</p>
-        <button class="btn-primary" onclick="goToJobScreen()" style="margin-top: 20px;">Try Again</button>
-      </div>
-    `;
-  } else {
-    // Success - results are already displayed by displayResult() call in runAnalysisAfterPayment()
-    showFeedbackTab();
+  if (lastAnalysis) {
+    const { analysis, salaryData, job, profile } = lastAnalysis;
+    displayResult(analysis, salaryData, job, profile);
   }
+  showScreen('resultScreen');
 }
-
-// ========================================
-// WHAT THIS FIXES:
-// ========================================
-// ✅ Analysis runs after payment succeeds
-// ✅ Results are displayed to the user
-// ✅ Loading state shows while processing
-// ✅ Error handling if analysis fails
-// ✅ User gets clear feedback at every step
-
-
 function closePaymentModal() {
   document.getElementById('paymentOverlay').classList.remove('show');
   document.getElementById('paymentModal').classList.remove('show');
@@ -2211,52 +2129,7 @@ function addCert() {
     input.value = '';
   }
 }
-// TEMPORARY TEST FUNCTION - ADD THIS AT THE BOTTOM
-function testDisplay() {
-  console.log("🧪 Testing displayResult with fake data...");
-  
-  const fakeAnalysis = {
-    recommendation: "TAKE",
-    score: 8,
-    confidence: 85,
-    reasoning: "This is a test - if you see this, displayResult() works!",
-    careerImpact: "Test career impact message",
-    strengths: ["Test strength 1", "Test strength 2"],
-    weaknesses: ["Test weakness 1"],
-    riskFactors: "Test risk factors",
-    questions: ["Test question 1?", "Test question 2?"],
-    scoringBreakdown: { salary: "Good match", growth: "Excellent" }
-  };
-  
-  const fakeSalary = { 
-    low: 80000, 
-    high: 150000, 
-    median: 120000, 
-    source: 'Test Data' 
-  };
-  
-  const fakeJob = {
-    jobTitle: "Test Engineer",
-    company: "Test Corp",
-    baseSalary: 120000,
-    hoursPerWeek: 40,
-    equity: "1%",
-    bonus: "10%"
-  };
-  
-  const fakeProfile = {
-    currentSalary: 100000,
-    currentHours: 40
-  };
-  
-  try {
-    displayResult(fakeAnalysis, fakeSalary, fakeJob, fakeProfile);
-    showScreen('resultScreen');
-    console.log("✅ Test completed - check if you see results");
-  } catch (error) {
-    console.error("❌ Test failed:", error);
-  }
-}
+
 
   </script>
 </body>
