@@ -1493,6 +1493,7 @@ async function analyzeOffer() {
   };
 
   try {
+    try {
     const response = await fetch("/api/analyze-offer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1501,6 +1502,9 @@ async function analyzeOffer() {
 
     if (!response.ok) throw new Error('API error');
     const aiAnalysis = await response.json();
+    
+    console.log("✅ API Response:", aiAnalysis); // ← ADD THIS
+    
     const salaryData = getSalaryData(jobTitle);
 
     clearInterval(progressInterval);
@@ -1509,6 +1513,19 @@ async function analyzeOffer() {
     setTimeout(() => {
       progressContainer.remove();
     }, 500);
+    
+    // THIS BLOCK SHOULD APPEAR ONLY ONCE
+    decisions.push({ ...aiAnalysis, job, profile, salaryData, timestamp: new Date().toLocaleString() });
+    
+    console.log("🎯 About to call displayResult()"); // ← ADD THIS
+    displayResult(aiAnalysis, salaryData, job, profile);
+    console.log("✅ displayResult() called"); // ← ADD THIS
+    
+    console.log("🎯 About to show result screen"); // ← ADD THIS
+    showScreen('resultScreen');
+    console.log("✅ Result screen shown"); // ← ADD THIS
+    
+    showFeedbackTab();
     
     // THIS BLOCK SHOULD APPEAR ONLY ONCE
     decisions.push({ ...aiAnalysis, job, profile, salaryData, timestamp: new Date().toLocaleString() });
