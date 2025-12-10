@@ -1185,8 +1185,10 @@ function goToJobScreen() {
     statusEl.innerHTML = `<span class="spinner"></span> Extracting data...`;
     
     // AUTO-EXTRACT after file loads
-    await extractResumeData();
-    
+// AUTO-EXTRACT after file loads
+const statusEl = document.getElementById('resumeStatus');
+await extractResumeData();
+statusEl.innerHTML = `✅ Data extracted from <strong>${file.name}</strong>!`;    
     // Success message shown by extractResumeData()
   } catch (error) {
     console.error('Error reading resume:', error);
