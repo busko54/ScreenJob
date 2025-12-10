@@ -1,4 +1,83 @@
-// /api/analyze-offer.js - FIXED VERSION
+// SALARY DATA FUNCTIONS
+async function fetchBLSSalaryData(jobTitle) {
+  try {
+    const occupationMap = {
+      'software engineer': 'OES151131',
+      'data scientist': 'OES151132',
+      'product manager': 'OES113021',
+      'designer': 'OES151191',
+      'manager': 'OES113051',
+      'engineer': 'OES172199',
+      'developer': 'OES151131',
+      'analyst': 'OES151111',
+      'architect': 'OES151131',
+      'nurse': 'OES291061'
+    };
+
+    const jobLower = jobTitle.toLowerCase();
+    let occupationCode = 'OES000000';
+
+    for (const [key, code] of Object.entries(occupationMap)) {
+      if (jobLower.includes(key)) {
+        occupationCode = code;
+        break;
+      }
+    }
+
+    const response = await fetch('https://api.bls.gov/publicAPI/v2/timeseries/data/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        seriesid: [occupationCode],
+        startyear: 2023,
+        endyear: 2024
+      })
+    });
+
+    if (!response.ok) throw new Error('BLS API error');
+    
+    const data = await response.json();
+
+    if (data.Results && data.Results.series && data.Results.series[0] && data.Results.series[0].data && data.Results.series[0].data.length > 0) {
+      const salaryStr = data.Results.series[0].data[0].value;
+      const salary = parseInt(salaryStr);
+
+      return {
+        median: salary,
+        low: Math.round(salary * 0.8),
+        high: Math.round(salary * 1.2),
+        source: 'BLS (Bureau of Labor Statistics)'
+      };
+    }
+  } catch (error) {
+    console.log('BLS API failed, using fallback:', error);
+  }
+  return null;
+}
+
+function getSalaryData(jobTitle) {
+  fetchBLSSalaryData(jobTitle).then(data => {
+    if (data) {
+      global.lastBLSData = data;
+    }
+  });
+
+  const ranges = {
+    'engineer': { low: 90000, high: 250000, median: 160000, source: 'estimate' },
+    'manager': { low: 110000, high: 280000, median: 180000, source: 'estimate' },
+    'designer': { low: 80000, high: 180000, median: 130000, source: 'estimate' },
+    'product': { low: 100000, high: 250000, median: 170000, source: 'estimate' },
+    'developer': { low: 85000, high: 220000, median: 150000, source: 'estimate' },
+    'analyst': { low: 70000, high: 180000, median: 120000, source: 'estimate' },
+    'architect': { low: 120000, high: 300000, median: 200000, source: 'estimate' },
+    'nurse': { low: 60000, high: 120000, median: 85000, source: 'estimate' },
+    'default': { low: 60000, high: 180000, median: 110000, source: 'estimate' }
+  };
+
+  const key = Object.keys(ranges).find(k => jobTitle.toLowerCase().includes(k)) || 'default';
+  return ranges[key];
+}
+
 // Rate limiting - max 10 requests per minute per IP
 const rateLimit = {};
 
@@ -30,7 +109,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing profile or job data' });
   }
   try {
-const prompt = `You are an expert career coach and negotiation strategist. Analyze this job offer comprehensively and provide a logically consistent recommendation.
+    const prompt = `You are an expert career coach and negotiation strategist. Analyze this job offer comprehensively and provide a logically consistent recommendation.
 
 CRITICAL - QUALIFICATION CHECK FIRST:
 Before analyzing the offer, check if the candidate meets job requirements:
@@ -100,6 +179,7 @@ Provide ONLY valid JSON (no markdown, no extra text):
   "riskFactors": "key risks if you take this",
   "questions": ["question1 to ask?", "question2 to ask?"]
 }`;
+
     const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", {
       method: "POST",
       headers: {
@@ -110,14 +190,20 @@ Provide ONLY valid JSON (no markdown, no extra text):
         contents: [{ parts: [{ text: prompt }] }]
       })
     });
+
     if (!response.ok) {
       throw new Error(`Gemini API error: ${response.status}`);
     }
+
     const data = await response.json();
     const textContent = data.candidates[0].content.parts[0].text;
     const cleanJson = textContent.replace(/```json\n?|\n?```/g, '').trim();
     const analysis = JSON.parse(cleanJson);
-    return res.status(200).json(analysis);
+    
+    // Get salary data
+    const salaryData = getSalaryData(job.jobTitle);
+    
+    return res.status(200).json({ ...analysis, salaryData });
   } catch (error) {
     console.error('Analysis error:', error);
     return res.status(500).json({ error: 'Failed to analyze offer', details: error.message });
