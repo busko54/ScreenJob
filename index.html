@@ -1418,7 +1418,7 @@ async function analyzeOffer() {
     return;
   }
 
-  if (analysisCount > 0) {
+  if (analysisCount >= 5) {
     showPaymentModal();
     return;
   }
