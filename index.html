@@ -1005,6 +1005,9 @@ input::placeholder, textarea::placeholder { color: #9ca3af; }
         </div>
       </div>
 
+     <div id="analysisCounter" style="text-align: center; margin-top: 15px; color: #6b7280; font-size: 13px;">
+  <span id="analysesRemaining">2</span> free analyses remaining
+</div>
   
 
       <!-- RESULT SCREEN -->
@@ -1420,7 +1423,7 @@ async function analyzeOffer() {
     return;
   }
 
-  if (analysisCount > 0) {
+  if (analysisCount >= 2) {
   showPaymentModal();
   return;
 }
@@ -1502,8 +1505,12 @@ async function analyzeOffer() {
     decisions.push({ ...aiAnalysis, job, profile, salaryData, timestamp: new Date().toLocaleString() });
     displayResult(aiAnalysis, salaryData, job, profile);
     showScreen('resultScreen');
-   // Update counter
-
+// Update counter
+document.getElementById('analysesRemaining').textContent = Math.max(0, 2 - analysisCount);
+if (analysisCount >= 1) {
+  document.getElementById('analysisCounter').innerHTML = 
+    '<span style="color: #ffb347; font-weight: 600;">⚠️ Last free analysis! Subscribe for unlimited.</span>';
+}
     showFeedbackTab();
 
   } catch (error) {
