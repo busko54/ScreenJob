@@ -1157,40 +1157,44 @@ function goToJobScreen() {
 }
    
     async function handleResumeUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
+  const file = event.target.files[0];
+  if (!file) return;
 
-      const statusEl = document.getElementById('resumeStatus');
-      const extractBtn = document.getElementById('extractResumeBtn');
-      
-      statusEl.textContent = '⏳ Reading resume...';
-      statusEl.classList.remove('empty');
+  const statusEl = document.getElementById('resumeStatus');
+  const extractBtn = document.getElementById('extractResumeBtn');
+  
+  statusEl.textContent = '⏳ Reading resume...';
+  statusEl.classList.remove('empty');
 
-      try {
-        let text = '';
-        if (file.type === 'application/pdf') {
-          text = await extractTextFromPDF(file);
-        } else if (file.type === 'text/plain') {
-          text = await file.text();
-        } else {
-          throw new Error('Unsupported file type');
-        }
-
-        resumeData = { text, fileName: file.name };
-        statusEl.innerHTML = `✅ Resume loaded: <strong>${file.name}</strong>`;
-        statusEl.classList.remove('empty');
-        extractBtn.style.display = 'none';
-
-       // AUTO-EXTRACT after file loads
-      await extractResumeData();
-      } catch (error) {
-        console.error('Error reading resume:', error);
-        statusEl.textContent = '❌ Error reading file. Try again.';
-        statusEl.classList.add('empty');
-        extractBtn.style.display = 'none';
-      }
+  try {
+    let text = '';
+    if (file.type === 'application/pdf') {
+      text = await extractTextFromPDF(file);
+    } else if (file.type === 'text/plain') {
+      text = await file.text();
+    } else {
+      throw new Error('Unsupported file type');
     }
 
+    resumeData = { text, fileName: file.name };
+    statusEl.innerHTML = `✅ Resume loaded: <strong>${file.name}</strong>`;
+    statusEl.classList.remove('empty');
+    extractBtn.style.display = 'none';
+    
+    // SHOW EXTRACTING STATUS
+    statusEl.innerHTML = `<span class="spinner"></span> Extracting data...`;
+    
+    // AUTO-EXTRACT after file loads
+    await extractResumeData();
+    
+    // Success message shown by extractResumeData()
+  } catch (error) {
+    console.error('Error reading resume:', error);
+    statusEl.textContent = '❌ Error reading file. Try again.';
+    statusEl.classList.add('empty');
+    extractBtn.style.display = 'none';
+  }
+}
     async function extractTextFromPDF(file) {
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
