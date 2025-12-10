@@ -1179,7 +1179,10 @@ function goToJobScreen() {
         resumeData = { text, fileName: file.name };
         statusEl.innerHTML = `✅ Resume loaded: <strong>${file.name}</strong>`;
         statusEl.classList.remove('empty');
-        extractBtn.style.display = 'block';
+        extractBtn.style.display = 'none';
+
+       // AUTO-EXTRACT after file loads
+      await extractResumeData();
       } catch (error) {
         console.error('Error reading resume:', error);
         statusEl.textContent = '❌ Error reading file. Try again.';
