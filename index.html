@@ -1376,6 +1376,9 @@ button.innerHTML = '<span class="spinner-big"></span> Extracting...';      butto
 
         if (!response.ok) throw new Error('API error');
         const extracted = await response.json();
+       if (extracted.baseSalary === 0) {
+      extracted.baseSalary = null;
+    }
 
         if (extracted.jobTitle) document.getElementById('jobTitle').value = extracted.jobTitle;
         if (extracted.company) document.getElementById('company').value = extracted.company;
@@ -1635,8 +1638,7 @@ function getSalaryData(jobTitle) {
 
        <div class="salary-data">
   <h3>📈 Market Data for ${job.jobTitle}</h3>
-  <p><strong>Your offer:</strong> ${job.baseSalary.toLocaleString()}</p>
-  <p><strong>Market range:</strong> ${salaryData.low.toLocaleString()} - ${salaryData.high.toLocaleString()}</p>
+<p><strong>Your offer:</strong> ${job.baseSalary ? '$' + job.baseSalary.toLocaleString() : 'Salary not disclosed'}</p>  <p><strong>Market range:</strong> ${salaryData.low.toLocaleString()} - ${salaryData.high.toLocaleString()}</p>
   <p><strong>Your position:</strong> ${percentile}th percentile (${percentile < 30 ? 'below' : percentile < 70 ? 'at' : 'above'} market)</p>
   <p style="font-size: 12px; color: #909090; margin-top: 12px;">📊 Data source: ${salaryData.source || 'Industry estimates'}</p>
   ${job.equity ? `<p><strong>Equity:</strong> ${job.equity}</p>` : ''}
