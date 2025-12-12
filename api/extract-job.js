@@ -34,7 +34,7 @@ export default async function handler(req, res) {
 {
   "jobTitle": "string",
   "company": "string",
-  "baseSalary": number or null (IMPORTANT: if salary has /week, /month, or /hr, convert to ANNUAL: weekly*52, monthly*12, hourly*2080),
+"baseSalary": number or null (IMPORTANT: if salary has /week, /month, or /hr, convert to ANNUAL: weekly*52, monthly*12, hourly*2080. If salary is not listed, says "competitive", or is missing, return null - do NOT return 0),
   "equity": "string or null",
   "bonus": "string or null",
   "hoursPerWeek": number or null,
