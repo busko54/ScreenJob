@@ -1533,27 +1533,21 @@ if (analysisCount >= 1) {
 }
 
 function getSalaryData(jobTitle) {
-      // Try to get real BLS data, fallback to estimates if API fails
-      fetchBLSSalaryData(jobTitle).then(data => {
-        if (data) {
-          lastBLSData = data;
-        }
-      });
-      
-      // Fallback salary ranges (used if BLS API fails or is slow)
-      const ranges = {
-        'engineer': { low: 90000, high: 250000, median: 160000, source: 'estimate' },
-        'manager': { low: 110000, high: 280000, median: 180000, source: 'estimate' },
-        'designer': { low: 80000, high: 180000, median: 130000, source: 'estimate' },
-        'product': { low: 100000, high: 250000, median: 170000, source: 'estimate' },
-        'developer': { low: 85000, high: 220000, median: 150000, source: 'estimate' },
-        'analyst': { low: 70000, high: 180000, median: 120000, source: 'estimate' },
-        'architect': { low: 120000, high: 300000, median: 200000, source: 'estimate' },
-        'default': { low: 60000, high: 180000, median: 110000, source: 'estimate' }
-      };
-      const key = Object.keys(ranges).find(k => jobTitle.toLowerCase().includes(k)) || 'default';
-      return ranges[key];
-    }
+  // Fallback salary ranges (used if BLS API fails or is slow)
+  const ranges = {
+    'engineer': { low: 90000, high: 250000, median: 160000, source: 'BLS estimate' },
+    'manager': { low: 110000, high: 280000, median: 180000, source: 'BLS estimate' },
+    'designer': { low: 80000, high: 180000, median: 130000, source: 'BLS estimate' },
+    'product': { low: 100000, high: 250000, median: 170000, source: 'BLS estimate' },
+    'developer': { low: 85000, high: 220000, median: 150000, source: 'BLS estimate' },
+    'analyst': { low: 70000, high: 180000, median: 120000, source: 'BLS estimate' },
+    'architect': { low: 120000, high: 300000, median: 200000, source: 'BLS estimate' },
+    'default': { low: 60000, high: 180000, median: 110000, source: 'BLS estimate' }
+  };
+  
+  const key = Object.keys(ranges).find(k => jobTitle.toLowerCase().includes(k)) || 'default';
+  return ranges[key];
+}
 
     async function fetchBLSSalaryData(jobTitle) {
       try {
