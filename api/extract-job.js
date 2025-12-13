@@ -74,8 +74,8 @@ ${jobPosting}`;
    const extracted = JSON.parse(cleanJson);
 
 // Convert 0 to null for salary
-if (extracted.baseSalary === 0) {
-  extracted.baseSalary = null;
+if (extracted.baseSalary === 0 || !extracted.baseSalary) {
+  extracted.baseSalary = 'TBD';
 }
 
 return res.status(200).json(extracted);
