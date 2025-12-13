@@ -71,8 +71,14 @@ ${jobPosting}`;
     const data = await response.json();
     const textContent = data.candidates[0].content.parts[0].text;
     const cleanJson = textContent.replace(/```json\n?|\n?```/g, '').trim();
-    const extracted = JSON.parse(cleanJson);
-    return res.status(200).json(extracted);
+   const extracted = JSON.parse(cleanJson);
+
+// Convert 0 to null for salary
+if (extracted.baseSalary === 0) {
+  extracted.baseSalary = null;
+}
+
+return res.status(200).json(extracted);
   } catch (error) {
     console.error('Job extraction error:', error);
     return res.status(500).json({ error: 'Failed to extract job data', details: error.message });
