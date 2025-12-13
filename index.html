@@ -1484,7 +1484,7 @@ async function analyzeOffer() {
   const job = {
   jobTitle: jobTitle,
   company: company,
-  baseSalary: baseSalary,
+  baseSalary: baseSalary > 0 ? baseSalary : null,
   equity: document.getElementById('equity').value,
   bonus: document.getElementById('bonus').value,
   hoursPerWeek: parseInt(document.getElementById('hoursPerWeek').value) || 0,
