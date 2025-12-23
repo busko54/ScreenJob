@@ -1,7 +1,6 @@
 // /api/extract-job.js
 // Rate limiting - max 10 requests per minute per IP
 const rateLimit = {};
-
 export default async function handler(req, res) {
   // RATE LIMITING CHECK
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -34,11 +33,11 @@ export default async function handler(req, res) {
 {
   "jobTitle": "string",
   "company": "string",
-"baseSalary": number or null (IMPORTANT: if salary has /week, /month, or /hr, convert to ANNUAL: weekly*52, monthly*12, hourly*2080. If salary is not listed, says "competitive", or is missing, return null - do NOT return 0),
+  "baseSalary": number or null,
+  "hourlyRate": number or null,
   "equity": "string or null",
   "bonus": "string or null",
   "hoursPerWeek": number or null,
-  "isRemote": boolean,
   "workEnv": "full-remote|hybrid|onsite",
   "fundingStage": "seed|series-a|series-b|growth|public",
   "teamSize": number or null,
@@ -47,11 +46,20 @@ export default async function handler(req, res) {
 }
 
 SALARY EXTRACTION RULES:
-- If you see "$X/week" → multiply by 52 to get annual
-- If you see "$X/month" → multiply by 12 to get annual
-- If you see "$X/hour" or "$X/hr" → multiply by 2080 to get annual
-- If you see "$X/year" or just "$X" → use as-is (annual)
-- ALWAYS return annual salary as a number
+- If you see a RANGE like "$15.49-18.63/hr": extract the MIDPOINT as hourlyRate (e.g., $17.06), then multiply by 2080 to get baseSalary
+- If you see "$X/hour" or "$X/hr" (single number): multiply by 2080 to get annual baseSalary, also return hourlyRate
+- If you see "$X/week" → multiply by 52 to get baseSalary
+- If you see "$X/month" → multiply by 12 to get baseSalary
+- If you see "$X/year" or just "$X" → use as-is for baseSalary
+- If salary is "competitive" or not listed → return null for baseSalary
+- ALWAYS return both hourlyRate (if it exists) AND annual baseSalary (if calculable)
+- NEVER return 0. Either return the actual number or null.
+
+HOURS EXTRACTION:
+- If you see "Full-time" → hoursPerWeek: 40
+- If you see "Part-time" → hoursPerWeek: 20
+- If you see specific hours (e.g., "25 hours/week") → use that number
+- If not mentioned → return null
 
 Job posting:
 ${jobPosting}`;
@@ -71,14 +79,19 @@ ${jobPosting}`;
     const data = await response.json();
     const textContent = data.candidates[0].content.parts[0].text;
     const cleanJson = textContent.replace(/```json\n?|\n?```/g, '').trim();
-   const extracted = JSON.parse(cleanJson);
-
-// Convert 0 to null for salary
-if (extracted.baseSalary === 0 || !extracted.baseSalary) {
-  extracted.baseSalary = 'TBD';
-}
-
-return res.status(200).json(extracted);
+    const extracted = JSON.parse(cleanJson);
+    
+    // FORCE salary calculation if hourly rate exists but baseSalary is missing
+    if ((!extracted.baseSalary || extracted.baseSalary === 0) && extracted.hourlyRate) {
+      extracted.baseSalary = Math.round(extracted.hourlyRate * 2080);
+    }
+    
+    // Convert 0 to null for salary
+    if (extracted.baseSalary === 0) {
+      extracted.baseSalary = null;
+    }
+    
+    return res.status(200).json(extracted);
   } catch (error) {
     console.error('Job extraction error:', error);
     return res.status(500).json({ error: 'Failed to extract job data', details: error.message });
